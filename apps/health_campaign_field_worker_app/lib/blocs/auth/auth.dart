@@ -163,6 +163,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     // (surfacing as "Failed to fetch checklist") and caused the batch-size
     // crash. The app config is re-fetched fresh on every app start, so we keep
     // the cached copy across logout instead of wiping it.
+    DigitDataModelSingleton().setHierarchyType(null);
     emit(const AuthUnauthenticatedState());
   }
 
@@ -212,6 +213,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     // (surfacing as "Failed to fetch checklist") and caused the batch-size
     // crash. The app config is re-fetched fresh on every app start, so we keep
     // the cached copy across logout instead of wiping it.
+    DigitDataModelSingleton().setHierarchyType(null);
     emit(const AuthUnauthenticatedState());
   }
 
