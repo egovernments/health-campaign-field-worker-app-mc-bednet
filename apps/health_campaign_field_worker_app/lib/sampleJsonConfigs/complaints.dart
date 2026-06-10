@@ -152,6 +152,8 @@ final dynamic sampleComplaintFlows = {
                       "data": [
                         {"code": "ASSIGN_TO_ALL", "name": "ASSIGN_TO_ALL"},
                         {"code": "ASSIGN_TO_ME", "name": "ASSIGN_TO_ME"},
+                        {"code": "ASSIGN_TO_ME", "name": "ASSIGN_TO_ME"},
+                        {"code": "ASSIGN_TO_ALL", "name": "ASSIGN_TO_ALL"}
                       ],
                       "type": "template",
                       "format": "radioList",
@@ -224,6 +226,7 @@ final dynamic sampleComplaintFlows = {
                             ]
                           }
                         },
+                        {"actionType": "CLOSE_POPUP", "properties": {}},
                         {
                           "actionType": "CLOSE_POPUP",
                           "properties": {"parentScreenKey": "complaintInbox"}
@@ -332,6 +335,7 @@ final dynamic sampleComplaintFlows = {
                       "label": "COMPLAINT_INBOX_SORT_PRIMARY_ACTION_LABEL",
                       "format": "button",
                       "onAction": [
+                        {"actionType": "CLOSE_POPUP", "properties": {}},
                         {
                           "actionType": "CLOSE_POPUP",
                           "properties": {"parentScreenKey": "complaintInbox"}
@@ -605,6 +609,152 @@ final dynamic sampleComplaintFlows = {
           "description": "APPONE_COMPLAINTTYPE_DESCRIPTION"
         },
         {
+          "page": "locationDetails",
+          "type": "object",
+          "label": "LOCATION_DETAILS_HEADING",
+          "order": 3,
+          "properties": [
+            {
+              "type": "string",
+              "label": "COMPLAINT_DETAILS_administrativeArea_LABEL",
+              "order": 1,
+              "value": "",
+              "format": "locality",
+              "hidden": false,
+              "tooltip": "",
+              "helpText": "",
+              "infoText": "",
+              "readOnly": false,
+              "fieldName": "administrativeArea",
+              "mandatory": true,
+              "deleteFlag": false,
+              "innerLabel": "",
+              "systemDate": false,
+              "validations": [
+                {
+                  "type": "required",
+                  "value": true,
+                  "message": "COMPLAINT_DETAILS_administrativeArea_REQUIRED_ERROR"
+                }
+              ],
+              "errorMessage": "",
+              "isMultiSelect": false
+            },
+            {
+              "type": "string",
+              "label": "LOCATION_DETAILS_addressLine1_LABEL",
+              "order": 1,
+              "value": "",
+              "format": "text",
+              "hidden": false,
+              "tooltip": "",
+              "helpText": "",
+              "infoText": "",
+              "readOnly": false,
+              "fieldName": "addressLine1",
+              "deleteFlag": false,
+              "innerLabel": "",
+              "systemDate": false,
+              "validations": [],
+              "errorMessage": "",
+              "isMultiSelect": false
+            },
+            {
+              "type": "string",
+              "label": "LOCATION_DETAILS_addressLine2_LABEL",
+              "order": 2,
+              "value": "",
+              "format": "text",
+              "hidden": false,
+              "tooltip": "",
+              "helpText": "",
+              "infoText": "",
+              "readOnly": false,
+              "fieldName": "addressLine2",
+              "deleteFlag": false,
+              "innerLabel": "",
+              "systemDate": false,
+              "validations": [],
+              "errorMessage": "",
+              "isMultiSelect": false
+            },
+            {
+              "type": "string",
+              "label": "LOCATION_DETAILS_landmark_LABEL",
+              "order": 3,
+              "value": "",
+              "format": "text",
+              "hidden": false,
+              "tooltip": "",
+              "helpText": "",
+              "infoText": "",
+              "readOnly": false,
+              "fieldName": "landmark",
+              "deleteFlag": false,
+              "innerLabel": "",
+              "systemDate": false,
+              "validations": [],
+              "errorMessage": "",
+              "isMultiSelect": false
+            },
+            {
+              "type": "integer",
+              "label": "LOCATION_DETAILS_pincode_LABEL",
+              "order": 4,
+              "value": "",
+              "format": "text",
+              "hidden": false,
+              "tooltip": "",
+              "helpText": "",
+              "infoText": "",
+              "readOnly": false,
+              "fieldName": "pincode",
+              "deleteFlag": false,
+              "innerLabel": "",
+              "systemDate": false,
+              "validations": [],
+              "errorMessage": "",
+              "isMultiSelect": false
+            },
+            {
+              "type": "string",
+              "enums": [
+                {
+                  "code": "PERMANENT",
+                  "name": "PERMANENT"
+                },
+                {
+                  "code": "CORRESPONDENCE",
+                  "name": "CORRESPONDENCE"
+                },
+                {
+                  "code": "OTHER",
+                  "name": "OTHER"
+                }
+              ],
+              "label": "LOCATION_DETAILS_typeOfAddress_LABEL",
+              "order": 5,
+              "format": "dropdown",
+              "hidden": true,
+              "tooltip": "",
+              "helpText": "",
+              "infoText": "",
+              "readOnly": false,
+              "fieldName": "typeOfAddress",
+              "deleteFlag": false,
+              "innerLabel": "",
+              "systemDate": false,
+              "validations": [],
+              "errorMessage": "",
+              "includeInForm": true,
+              "isMultiSelect": false,
+              "includeInSummary": false
+            }
+          ],
+          "actionLabel": "LOCATION_DETAILS_ACTION_LABEL",
+          "description": "LOCATION_DETAILS_DESCRIPTION"
+        },
+        {
           "page": "complaintDetails",
           "type": "object",
           "label": "COMPLAINT_DETAILS_HEADING",
@@ -646,6 +796,8 @@ final dynamic sampleComplaintFlows = {
                   "value": true,
                   "message":
                       "COMPLAINT_DETAILS_complaintRaisedFor_REQUIRED_ERROR"
+                  // "message":
+                  //     "COMPLAINT_DETAILS_complaintRaisedFor_REQUIRED_ERROR"
                 }
               ],
               "errorMessage": "",
@@ -680,8 +832,13 @@ final dynamic sampleComplaintFlows = {
                 },
                 {
                   "type": "maxLength",
-                  "value": 64,
+                  "value": 63,
                   "message": "COMPLAINT_DETAILS_name_LABEL_MAX_VALIDATION"
+                },
+                {
+                  "type": "pattern",
+                  "value": "^[a-zA-Z0-9 ]+\$",
+                  "message": "COMPLAINT_DETAILS_name_LABEL_PATTERN_VALIDATION"
                 }
               ],
               "errorMessage": "",
@@ -702,6 +859,7 @@ final dynamic sampleComplaintFlows = {
               "format": "mobileNumber",
               "hidden": false,
               "tooltip": "",
+              "pattern": "^\\d+",
               "helpText": "",
               "infoText": "",
               "readOnly": false,
@@ -719,8 +877,13 @@ final dynamic sampleComplaintFlows = {
                 },
                 {
                   "type": "minLength",
-                  "value": 11,
-                  "message": "MOBILE_LENGTH_11_DIGITS"
+                  "value": 10,
+                  "message": "MOBILE_LENGTH_10_DIGIT"
+                },
+                {
+                  "type": "pattern",
+                  "value": r"^\d+$",
+                  "message": "MB_ONLY_NUMBERS"
                 },
                 {
                   "type": "maxLength",
@@ -729,6 +892,7 @@ final dynamic sampleComplaintFlows = {
                 }
               ],
               "errorMessage": "",
+              "pattern.message": "MB_ONLY_NUMBERS",
               "isMultiSelect": false,
               "autoFillCondition": [
                 {
@@ -761,8 +925,13 @@ final dynamic sampleComplaintFlows = {
                 },
                 {
                   "type": "maxLength",
-                  "value": 64,
+                  "value": 63,
                   "message": "SUPERVISOR_DETAILS_name_LABEL_MAX_VALIDATION"
+                },
+                {
+                  "type": "pattern",
+                  "value": "^[a-zA-Z0-9 ]+\$",
+                  "message": "SUPERVISOR_DETAILS_name_LABEL_PATTERN_VALIDATION"
                 }
               ],
               "errorMessage": "",
@@ -775,6 +944,7 @@ final dynamic sampleComplaintFlows = {
               "value": "",
               "format": "mobileNumber",
               "hidden": false,
+              "pattern": "^\\d+",
               "tooltip": "",
               "helpText": "",
               "infoText": "",
@@ -794,9 +964,15 @@ final dynamic sampleComplaintFlows = {
                   "type": "maxLength",
                   "value": 11,
                   "message": "MOBILE_LENGTH_11_DIGITS"
+                },
+                {
+                  "type": "pattern",
+                  "value": r"^\d+$",
+                  "message": "MB_ONLY_NUMBERS"
                 }
               ],
               "errorMessage": "",
+              "pattern.message": "MB_ONLY_NUMBERS",
               "isMultiSelect": false
             },
             {

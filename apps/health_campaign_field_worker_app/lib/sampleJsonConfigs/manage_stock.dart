@@ -1018,7 +1018,7 @@ final dynamic sampleInventoryFlows = {
                 },
                 {
                   "type": "regex",
-                  "value": "^[0-9]",
+                  "value": "^[0-9]+",
                   "message": "QUANTITY_VALID_NUMBER_ERROR_MESSAGE"
                 }
               ],
@@ -1062,7 +1062,7 @@ final dynamic sampleInventoryFlows = {
                 },
                 {
                   "type": "regex",
-                  "value": "^[0-9]",
+                  "value": "^[0-9]+",
                   "message": "QUANTITY_VALID_NUMBER_ERROR_MESSAGE"
                 }
               ],
@@ -1106,7 +1106,7 @@ final dynamic sampleInventoryFlows = {
                 },
                 {
                   "type": "regex",
-                  "value": "^[0-9]",
+                  "value": "^[0-9]+",
                   "message": "QUANTITY_VALID_NUMBER_ERROR_MESSAGE"
                 }
               ],
@@ -1158,7 +1158,7 @@ final dynamic sampleInventoryFlows = {
                 },
                 {
                   "type": "regex",
-                  "value": "^[0-9]",
+                  "value": "^[0-9]+",
                   "message": "QUANTITY_VALID_NUMBER_ERROR_MESSAGE"
                 }
               ],
@@ -1197,7 +1197,7 @@ final dynamic sampleInventoryFlows = {
                 },
                 {
                   "type": "regex",
-                  "value": "^[0-9]",
+                  "value": "^[0-9]+",
                   "message": "QUANTITY_VALID_NUMBER_ERROR_MESSAGE"
                 }
               ],
@@ -1231,7 +1231,7 @@ final dynamic sampleInventoryFlows = {
               "validations": [
                 {
                   "type": "regex",
-                  "value": "^[0-9]",
+                  "value": "^[0-9]+",
                   "message": "QUANTITY_VALID_NUMBER_ERROR_MESSAGE"
                 }
               ],
@@ -1270,7 +1270,7 @@ final dynamic sampleInventoryFlows = {
                 },
                 {
                   "type": "regex",
-                  "value": "^[0-9]",
+                  "value": "^[0-9]+",
                   "message": "QUANTITY_VALID_NUMBER_ERROR_MESSAGE"
                 }
               ],
@@ -1906,7 +1906,7 @@ final dynamic sampleInventoryFlows = {
                 },
                 {
                   "type": "regex",
-                  "value": "^[0-9]",
+                  "value": "^[0-9]+",
                   "message": "INVENTORY_VALID_NUMBER_REQUIRED_MESSAGE"
                 }
               ],
@@ -3083,7 +3083,7 @@ final dynamic sampleInventoryFlows = {
                 },
                 {
                   "type": "regex",
-                  "value": "^[0-9]",
+                  "value": "^[0-9]+",
                   "message": "INVENTORY_VALID_NUMBER_REQUIRED_MESSAGE"
                 }
               ],

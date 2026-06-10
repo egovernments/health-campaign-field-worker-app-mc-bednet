@@ -182,6 +182,87 @@ bool _recordedSideEffectInternal(
   return false;
 }
 
+bool _evaluateAgeComparator(String expression, int totalAgeMonths) {
+  final ageOnLeft = RegExp(r'^age(<=|>=|<|>|==|=)(-?\d+)$');
+  final ageOnRight = RegExp(r'^(-?\d+)(<=|>=|<|>|==|=)age$');
+
+  final leftMatch = ageOnLeft.firstMatch(expression);
+  if (leftMatch != null) {
+    final operator = leftMatch.group(1)!;
+    final value = int.tryParse(leftMatch.group(2)!);
+    if (value == null) return false;
+
+    switch (operator) {
+      case '<=':
+        return totalAgeMonths <= value;
+      case '>=':
+        return totalAgeMonths >= value;
+      case '<':
+        return totalAgeMonths < value;
+      case '>':
+        return totalAgeMonths > value;
+      case '=':
+      case '==':
+        return totalAgeMonths == value;
+    }
+  }
+
+  final rightMatch = ageOnRight.firstMatch(expression);
+  if (rightMatch != null) {
+    final value = int.tryParse(rightMatch.group(1)!);
+    final operator = rightMatch.group(2)!;
+    if (value == null) return false;
+
+    switch (operator) {
+      case '<=':
+        return value <= totalAgeMonths;
+      case '>=':
+        return value >= totalAgeMonths;
+      case '<':
+        return value < totalAgeMonths;
+      case '>':
+        return value > totalAgeMonths;
+      case '=':
+      case '==':
+        return value == totalAgeMonths;
+    }
+  }
+
+  return false;
+}
+
+bool _isAgeEligibleFromDoseCriteria(
+  ProjectCycle? currentCycle,
+  int totalAgeMonths,
+) {
+  if (currentCycle == null) return false;
+
+  final conditions = (currentCycle.deliveries ?? <ProjectCycleDelivery>[])
+      .expand((delivery) => delivery.doseCriteria ?? <DeliveryDoseCriteria>[])
+      .map((criteria) => criteria.condition?.toLowerCase().trim() ?? '')
+      .where((condition) => condition.isNotEmpty)
+      .toList();
+
+  // If cycle has no condition-based age filters, keep eligibility open.
+  if (conditions.isEmpty) return true;
+
+  for (final condition in conditions) {
+    final normalized = condition.replaceAll(' ', '').replaceAll('&&', 'and');
+    if (!normalized.contains('age')) continue;
+
+    final clauses = normalized.split('and').where((e) => e.isNotEmpty).toList();
+    if (clauses.isEmpty) continue;
+
+    final matchesAllClauses = clauses
+        .every((clause) => _evaluateAgeComparator(clause, totalAgeMonths));
+    if (matchesAllClauses) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // Helper function matching hasLogWithType logic
 bool _hasLogWithType(attendanceLog, DateTime date, String type) {
   final logTime = type == 'ENTRY'
@@ -320,7 +401,7 @@ void initializeFunctionRegistry() {
   /// - **Returns**: `true` if the beneficiary is eligible, otherwise `false`.
   ///
   /// The function checks:
-  /// 1. If the beneficiary's age falls within the project's valid age range.
+  /// 1. If the beneficiary's age matches any dose criteria condition in the current cycle.
   /// 2. If a side effect was recorded for the last completed task within the current cycle.
   /// 3. If the `checkStatus` function allows for a new task to be created.
   FunctionRegistry.register('checkEligibilityForAgeAndSideEffect',
@@ -346,26 +427,16 @@ void initializeFunctionRegistry() {
     final sideEffects = (stateData.modelMap['sideEffects'] as List?) ?? [];
 
 // --- Current active cycle ---
-    Map<String, dynamic>? currentCycle;
-    for (final e in projectType.cycles ?? []) {
-      if ((e.startDate ?? 0) < DateTime.now().millisecondsSinceEpoch &&
-          (e.endDate ?? 0) > DateTime.now().millisecondsSinceEpoch) {
-        currentCycle = {
-          "startDate": e.startDate,
-          "endDate": e.endDate,
-        };
-        break;
-      }
-    }
+    final currentCycle = projectType.cycles?.firstWhereOrNull(
+      (e) =>
+          e.startDate < DateTime.now().millisecondsSinceEpoch &&
+          e.endDate > DateTime.now().millisecondsSinceEpoch,
+    );
     if (currentCycle == null) return false;
 
 // --- Check age eligibility ---
-    int validMinAge = projectType.validMinAge ?? 3;
-    int validMaxAge = projectType.validMaxAge ?? 59;
-
     final isWithinAge =
-        totalAgeMonths >= validMinAge && totalAgeMonths <= validMaxAge;
-    totalAgeMonths <= validMaxAge;
+        _isAgeEligibleFromDoseCriteria(currentCycle, totalAgeMonths);
 
     if (!isWithinAge) return false;
 
@@ -435,12 +506,11 @@ void initializeFunctionRegistry() {
           : null;
 
       recordedSideEffect = lastTaskTime != null &&
-          (lastTaskTime >= (currentCycle['startDate'] ?? 0) &&
-              lastTaskTime <= (currentCycle['endDate'] ?? 0));
+          (lastTaskTime >= currentCycle.startDate &&
+              lastTaskTime <= currentCycle.endDate);
 
       final isWithinAge =
-          totalAgeMonths >= validMinAge && totalAgeMonths <= validMaxAge;
-      totalAgeMonths <= validMaxAge;
+          _isAgeEligibleFromDoseCriteria(currentCycle, totalAgeMonths);
 
       if (!isWithinAge) return false;
 
@@ -449,11 +519,7 @@ void initializeFunctionRegistry() {
 
       return recordedSideEffect && !statusOk ? false : true;
     } else {
-      if (projectType.validMaxAge != null && projectType.validMinAge != null) {
-        return totalAgeMonths >= projectType.validMinAge! &&
-            totalAgeMonths <= projectType.validMaxAge!;
-      }
-      return true;
+      return _isAgeEligibleFromDoseCriteria(currentCycle, totalAgeMonths);
     }
   });
 
@@ -1409,7 +1475,8 @@ void initializeFunctionRegistry() {
     if (ec1 == 'YES') symptoms.add('SICK');
     if (ec2 == 'YES') {
       symptoms.add('FEVER');
-    } else {
+    }
+    if (symptoms.isEmpty) {
       symptoms.add('DRUG_SE_PC');
     }
 
@@ -1526,7 +1593,10 @@ void initializeFunctionRegistry() {
   FunctionRegistry.register('computeReferralButtonLabel', (args, stateData) {
     if (args.isEmpty) return 'HF_REFERRAL_CONTINUE';
 
-    final symptom = args[0]?.toString().toUpperCase() ?? '';
+    // Symptom may be a comma-separated list (e.g. "SICK,FEVER"); take the
+    // last segment as the primary symptom.
+    final symptom =
+        (args[0]?.toString() ?? '').split(',').last.trim().toUpperCase();
     final fields = args.length > 1 ? args[1] : null;
 
     // Map symptom to its corresponding checklist key
@@ -1579,7 +1649,10 @@ void initializeFunctionRegistry() {
   FunctionRegistry.register('computeReferralStatus', (args, stateData) {
     if (args.isEmpty) return 'CORE_COMMON_NOT_VISITED';
 
-    final symptom = args[0]?.toString().toUpperCase() ?? '';
+    // Symptom may be a comma-separated list (e.g. "SICK,FEVER"); take the
+    // last segment as the primary symptom.
+    final symptom =
+        (args[0]?.toString() ?? '').split(',').last.trim().toUpperCase();
     final fields = args.length > 1 ? args[1] : null;
 
     // Map symptom to its corresponding checklist key
@@ -1910,5 +1983,56 @@ void initializeFunctionRegistry() {
         : <String, dynamic>{};
 
     return wrapperData['latestBeneficiaryId'] as String?;
+  });
+
+  /// Coerce any resolved value to a String suitable for storing in navigation
+  /// params or task additionalFields (whose DB column is String).
+  ///
+  /// Handles common shapes produced by deep template paths:
+  /// - String/num/bool → toString()
+  /// - Map with 'givenName' (NameModel.toMap()) → givenName
+  /// - EntityModel (e.g. NameModel) → toMap()['givenName'] if present, else toMap()['name']
+  /// - Lists → first non-null element resolved recursively
+  ///
+  /// Returns '' for null/missing values.
+  FunctionRegistry.register('str', (args, stateData) {
+    dynamic coerce(dynamic v) {
+      if (v == null) return '';
+      if (v is String) return v;
+      if (v is num || v is bool) return v.toString();
+      if (v is List) {
+        for (final item in v) {
+          final r = coerce(item);
+          if (r is String && r.isNotEmpty) return r;
+        }
+        return '';
+      }
+      if (v is Map) {
+        if (v['givenName'] != null) return v['givenName'].toString();
+        if (v['name'] is Map && (v['name'] as Map)['givenName'] != null) {
+          return (v['name'] as Map)['givenName'].toString();
+        }
+        return '';
+      }
+      if (v is EntityModel) {
+        try {
+          final m = v.toMap();
+          if (m['givenName'] != null) return m['givenName'].toString();
+          final nameField = m['name'];
+          if (nameField is Map && nameField['givenName'] != null) {
+            return nameField['givenName'].toString();
+          }
+          if (nameField is EntityModel) {
+            final nm = nameField.toMap();
+            if (nm['givenName'] != null) return nm['givenName'].toString();
+          }
+        } catch (_) {}
+        return '';
+      }
+      return v.toString();
+    }
+
+    if (args.isEmpty) return '';
+    return coerce(args.first);
   });
 }

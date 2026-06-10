@@ -185,11 +185,44 @@ final jsonConfig = {
           /// Note: Generate uuid
           "tenantId": "__context:tenantId",
           "rowVersion": "meta.rowVersion",
-          "additionalFields": "additionalInfo.fields",
+          "additionalFields": {
+            "name":
+                "__concatName:beneficiaryDetails.nameOfIndividual,beneficiaryDetails.familyname",
+            "gender": "beneficiaryDetails.gender",
+            "dateOfBirth": "beneficiaryDetails.dobPicker",
+            "individualClientReferenceId":
+                "__ref:IndividualModel.clientReferenceId",
+            "beneficiaryId": "beneficiaryDetails.beneficiaryId"
+          },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit",
         }
       },
+    }
+  },
+  // Bulk-creates one ProjectBeneficiaryModel per individual passed in
+  // __context:individuals. Used by the search-page OPEN button when the row
+  // has zero projectBeneficiaries: the household + individuals already exist
+  // in the local store (downsynced), so we only need to mint the PB join rows
+  // to enroll every member in the current project — no form, no second
+  // registration. Implicit list-item context resolves the bare
+  // "clientReferenceId" mapping against individuals[index].clientReferenceId
+  // (see transformer_service.dart:882–916).
+  "bulkProjectBeneficiaryFromMembers": {
+    "models": {
+      "ProjectBeneficiaryModel": {
+        "listSource": "__context:individuals",
+        "mappings": {
+          "projectId": "__context:projectId",
+          "tenantId": "__context:tenantId",
+          "beneficiaryClientReferenceId": "clientReferenceId",
+          "clientReferenceId": "__generate:uuid",
+          "dateOfRegistration": "__value:DATETIME.NOW",
+          "rowVersion": "meta.rowVersion",
+          "auditDetails": "__generate:audit",
+          "clientAuditDetails": "__generate:clientAudit",
+        }
+      }
     }
   },
   "householdConsentRegistration": {
@@ -382,7 +415,15 @@ final jsonConfig = {
           /// Note: Generate uuid
           "tenantId": "__context:tenantId",
           "rowVersion": "meta.rowVersion",
-          "additionalFields": "additionalInfo.fields",
+          "additionalFields": {
+            "name":
+                "__concatName:beneficiaryDetails.nameOfIndividual,beneficiaryDetails.familyname",
+            "gender": "beneficiaryDetails.gender",
+            "dateOfBirth": "beneficiaryDetails.dobPicker",
+            "individualClientReferenceId":
+                "__ref:IndividualModel.clientReferenceId",
+            "beneficiaryId": "beneficiaryDetails.beneficiaryId"
+          },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit",
         }
@@ -445,18 +486,33 @@ final jsonConfig = {
           "additionalFields": {
             "doseIndex": "__listItem:id",
             "cycleIndex": "__context:cycleIndex",
-            "deliveryStrategy": "__listItem:deliveryStrategy"
+            "deliveryStrategy": "__listItem:deliveryStrategy",
+            "householdClientReferenceId":
+                "__context:HouseholdClientReferenceId",
+            "memberCount": "__context:memberCount",
+            "individualClientReferenceId":
+                "__context:individualClientReferenceId",
+            "beneficiaryId": "__context:beneficiaryId",
+            "childName": "__context:childName",
+            "ageInMonths": "__context:ageInMonths",
+            "gender": "__context:gender",
+            "headName": "__context:headName",
+            "headMobileNumber": "__context:headMobileNumber"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit"
         },
         "listMappings": {
           "TaskResourceModel": {
-            "listSource": "__listItem:doseCriteria[0].ProductVariants",
+            // Mirror the direct delivery's resourceCard so future indirect doses
+            // carry the same productVariantId as what was just administered
+            // (e.g., SPAQ1 vs SPAQ2 by age) instead of a hardcoded doseCriteria[0].
+            "listSource": "DeliveryDetails.resourceCard",
             "mappings": {
               "clientReferenceId": "__generate:uuid",
               "taskId": "taskId",
-              "productVariantId": "productVariantId",
+              "productVariantId":
+                  "DeliveryDetails.resourceCard.resourceDelivered.productId",
               "quantity": "__value:1",
               "isDelivered": "__value:true",
               "deliveryComment": "DeliveryDetails.deliveryComment",
@@ -528,7 +584,18 @@ final jsonConfig = {
           "additionalFields": {
             "doseIndex": "__context:doseIndex",
             "cycleIndex": "__context:cycleIndex",
-            "deliveryStrategy": "__context:deliveryStrategy"
+            "deliveryStrategy": "__context:deliveryStrategy",
+            "householdClientReferenceId":
+                "__context:HouseholdClientReferenceId",
+            "memberCount": "__context:memberCount",
+            "individualClientReferenceId":
+                "__context:individualClientReferenceId",
+            "beneficiaryId": "__context:beneficiaryId",
+            "childName": "__context:childName",
+            "ageInMonths": "__context:ageInMonths",
+            "gender": "__context:gender",
+            "headName": "__context:headName",
+            "headMobileNumber": "__context:headMobileNumber"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit"
@@ -610,7 +677,18 @@ final jsonConfig = {
           },
           "additionalFields": {
             "doseIndex": "__context:doseIndex",
-            "cycleIndex": "__context:cycleIndex"
+            "cycleIndex": "__context:cycleIndex",
+            "householdClientReferenceId":
+                "__context:HouseholdClientReferenceId",
+            "memberCount": "__context:memberCount",
+            "individualClientReferenceId":
+                "__context:individualClientReferenceId",
+            "beneficiaryId": "__context:beneficiaryId",
+            "childName": "__context:childName",
+            "ageInMonths": "__context:ageInMonths",
+            "gender": "__context:gender",
+            "headName": "__context:headName",
+            "headMobileNumber": "__context:headMobileNumber"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit"
@@ -672,7 +750,18 @@ final jsonConfig = {
           "additionalFields": {
             "doseIndex": "__context:doseIndex",
             "cycleIndex": "__context:cycleIndex",
-            "comment": "unableToDeliver.comment"
+            "comment": "unableToDeliver.comment",
+            "householdClientReferenceId":
+                "__context:HouseholdClientReferenceId",
+            "memberCount": "__context:memberCount",
+            "individualClientReferenceId":
+                "__context:individualClientReferenceId",
+            "beneficiaryId": "__context:beneficiaryId",
+            "childName": "__context:childName",
+            "ageInMonths": "__context:ageInMonths",
+            "gender": "__context:gender",
+            "headName": "__context:headName",
+            "headMobileNumber": "__context:headMobileNumber"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit"
@@ -706,9 +795,9 @@ final jsonConfig = {
             "id": "address.id",
             "relatedClientReferenceId": "__ref:TaskModel.clientReferenceId",
             "doorNo": "address.doorNo",
-            "latitude": "address.latLng[0]",
-            "longitude": "address.latLng[1]",
-            "locationAccuracy": "address.latLng[1]",
+            "latitude": "__context:latitude",
+            "longitude": "__context:longitude",
+            "locationAccuracy": "__context:locationAccuracy",
             "addressLine1": "address.addressLine1",
             "addressLine2": "address.addressLine2",
             "landmark": "address.landmark",
@@ -737,7 +826,18 @@ final jsonConfig = {
             "cycleIndex": "__context:cycleIndex",
             "reasonForRedose": "RedoseDetails.reasonForRedose",
             "redoseComments": "RedoseDetails.redoseComments",
-            "taskType": "__value:REDOSE"
+            "taskType": "__value:REDOSE",
+            "householdClientReferenceId":
+                "__context:HouseholdClientReferenceId",
+            "memberCount": "__context:memberCount",
+            "individualClientReferenceId":
+                "__context:individualClientReferenceId",
+            "beneficiaryId": "__context:beneficiaryId",
+            "childName": "__context:childName",
+            "ageInMonths": "__context:ageInMonths",
+            "gender": "__context:gender",
+            "headName": "__context:headName",
+            "headMobileNumber": "__context:headMobileNumber"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit"
@@ -790,7 +890,7 @@ final jsonConfig = {
           "senderType":
               "__switch:__context:senderPartyType:{STAFF:__value:STAFF,default:__value:WAREHOUSE}",
           "receiverId":
-              "__switch:__context:receiverPartyType:{STAFF:warehouseDetails.teamCode,default:warehouseDetails.facilityToWhich}",
+              "__switch:__context:receiverPartyType:{STAFF:__context:teamCode,default:warehouseDetails.facilityToWhich}",
           "receiverType":
               "__switch:__context:receiverPartyType:{STAFF:__value:STAFF,default:__value:WAREHOUSE}",
           "nonRecoverableError": "errors.nonRecoverable",
