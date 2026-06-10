@@ -170,7 +170,7 @@ class StockDownSyncBloc extends Bloc<StockDownSyncEvent, StockDownSyncState> {
       ));
 
       int? lastSyncedTime = existingDownSyncData.isEmpty
-          ? null
+          ? DateTime.now().millisecondsSinceEpoch
           : existingDownSyncData.first.lastSyncedTime;
 
       // Always start from offset 0 for total count check since
@@ -224,7 +224,7 @@ class StockDownSyncBloc extends Bloc<StockDownSyncEvent, StockDownSyncState> {
         ));
 
         int? lastSyncedTime = existingDownSyncData.isEmpty
-            ? null
+            ? DateTime.now().millisecondsSinceEpoch
             : existingDownSyncData.first.lastSyncedTime;
 
         // Create initial downsync record if not exists
