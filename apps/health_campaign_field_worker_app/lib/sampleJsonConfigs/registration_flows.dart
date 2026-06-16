@@ -394,58 +394,6 @@ final dynamic sampleFlowss = {
       "name": "beneficiaryDetails",
       "order": 9,
       "footer": [
-        // {
-        //   "type": "template",
-        //   "label": "RECORD_CYCLE_DOSE",
-        //   "format": "actionPopup",
-        //   "fieldName": "insufficientStockPopUp",
-        //   "visible":
-        //       "{{fn:hasStockForDelivery(contextData.0.eligibleProductVariants)}} == false",
-        //   "properties": {
-        //     "icon": "Warning",
-        //     "size": "large",
-        //     "type": "primary",
-        //     "suffixIcon": null,
-        //     "popupConfig": {
-        //       "body": [
-        //         {
-        //           "type": "template",
-        //           "value": "{{fn:getInsufficientStockMessage()}}",
-        //           "format": "textTemplate",
-        //           "fieldName": "insufficientStockMessageText"
-        //         }
-        //       ],
-        //       "type": "default",
-        //       "title": "INSUFFICIENT_STOCK_TITLE",
-        //       "titleIcon": "Warning",
-        //       "footerActions": [
-        //         {
-        //           "type": "template",
-        //           "label": "GO_BACK",
-        //           "format": "button",
-        //           "onAction": [
-        //             {
-        //               "actionType": "CLOSE_POPUP",
-        //               "properties": {"parentScreenKey": "beneficiaryDetails"}
-        //             }
-        //           ],
-        //           "fieldName": "closePopUp",
-        //           "properties": {
-        //             "size": "large",
-        //             "type": "primary",
-        //             "mainAxisSize": "max"
-        //           }
-        //         }
-        //       ],
-        //       "showCloseButton": true,
-        //       "barrierDismissible": true
-        //     },
-        //     "mainAxisSize": "max",
-        //     "mainAxisAlignment": "center"
-        //   },
-        //   "schemaCode": null,
-        //   "suffixIcon": null
-        // },
         {
           "type": "template",
           "label": "RECORD_CYCLE_DOSE",
@@ -966,6 +914,60 @@ final dynamic sampleFlowss = {
       "name": "householdOverview",
       "order": 3,
       "footer": [
+        {
+          "type": "template",
+          "label": "REGISTER_BENEFICIARY",
+          "format": "actionPopup",
+          "fieldName": "insufficientStockOverviewPopUp",
+          "visible": "true",
+          "properties": {
+            "size": "large",
+            "type": "primary",
+            "popupConfig": {
+              "body": [
+                {
+                  "type": "template",
+                  "value": "{{fn:getRegistrationInsufficientStockMessage()}}",
+                  "format": "textTemplate",
+                  "fieldName": "insufficientStockOverviewText",
+                  "maxLines": 8,
+                  "properties": {"textAlign": "center"}
+                }
+              ],
+              "type": "alert",
+              "title": "INSUFFICIENT_STOCK_TITLE",
+              "titleIcon": "Warning",
+              "footerActions": [
+                {
+                  "type": "template",
+                  "label": "BACK_TO_HOME_LABEL",
+                  "format": "button",
+                  "onAction": [
+                    {
+                      "actionType": "CLOSE_POPUP",
+                      "properties": {"parentScreenKey": "householdOverview"}
+                    },
+                    {
+                      "actionType": "NAVIGATION",
+                      "properties": {"name": "HOME", "type": "HOME"}
+                    }
+                  ],
+                  "fieldName": "closeInsufficientStockOverviewPopUp",
+                  "properties": {
+                    "size": "large",
+                    "type": "primary",
+                    "mainAxisSize": "max"
+                  }
+                }
+              ],
+              "showCloseButton": true,
+              "barrierDismissible": true
+            },
+            "mainAxisSize": "max",
+            "mainAxisAlignment": "center"
+          },
+          "schemaCode": null
+        },
         {
           "type": "template",
           "label": "APPONE_REGISTRATION_HOUSEHOLDDETAILS_ACTION_BUTTON_LABEL_1",
@@ -7630,62 +7632,128 @@ final dynamic sampleFlows = {
           "visible": true,
           "onAction": [
             {
-              "actionType": "NAVIGATION",
-              "properties": {
-                "data": [
-                  {
-                    "key": "ProjectBeneficiaryClientReferenceId",
-                    "value": "{{navigation.test0012}}"
-                  },
-                  {
-                    "key": "HouseholdClientReferenceId",
-                    "value": "{{navigation.HouseholdClientReferenceId}}"
-                  },
-                  {
-                    "key": "memberCount",
-                    "value":
-                        "{{contextData.0.household.HouseholdModel.memberCount}}"
-                  },
-                  // {
-                  //   "key": "ProjectBeneficiaryClientReferenceId",
-                  //   "value": "{{projectBeneficiaries.0.clientReferenceId}}"
-                  // },
-                  // {
-                  //   "key": "HouseholdClientReferenceId",
-                  //   "value": "{{household.0.clientReferenceId}}"
-                  // },
-                  {
-                    "key": "cycleIndex",
-                    "value": "{{contextData.0.nextCycleId}}"
-                  },
-                  {"key": "doseIndex", "value": "{{contextData.0.nextDoseId}}"},
-                  {
-                    "key": "deliveryStrategy",
-                    "value":
-                        "{{contextData.0.currentDelivery.0.deliveryStrategy}}"
-                  },
-                  {
-                    "key": "totalDosesInCycle",
-                    "value": "{{contextData.0.deliveryLength}}"
-                  },
-                  {
-                    "key": "futureDoses",
-                    "value": "{{contextData.0.futureDeliveries}}"
-                  },
-                  {
-                    "key": "qty",
-                    "value":
-                        "{{contextData.0.targetCycle.0.deliveries.0.doseCriteria.0.ProductVariants.0.quantity}}"
-                  },
-                  {
-                    "key": "beneficiaryId",
-                    "value":
-                        "{{contextData.0.headIndividual.IndividualModel.identifiers.0.identifierId}}"
+              "actions": [
+                {
+                  "actionType": "OPEN_POPUP",
+                  "properties": {
+                    "size": "large",
+                    "type": "primary",
+                    "popupConfig": {
+                      "body": [
+                        {
+                          "type": "template",
+                          "value":
+                              "{{fn:getRegistrationInsufficientStockMessage()}}",
+                          "format": "textTemplate",
+                          "fieldName": "insufficientStockOverviewText",
+                          "maxLines": 8,
+                          "properties": {"textAlign": "center"}
+                        }
+                      ],
+                      "type": "alert",
+                      "title": "INSUFFICIENT_STOCK_TITLE",
+                      "titleIcon": "Warning",
+                      "footerActions": [
+                        {
+                          "type": "template",
+                          "label": "BACK_TO_HOME_LABEL",
+                          "format": "button",
+                          "onAction": [
+                            {
+                              "actionType": "CLOSE_POPUP",
+                              "properties": {
+                                "parentScreenKey": "householdOverview"
+                              }
+                            },
+                            {
+                              "actionType": "NAVIGATION",
+                              "properties": {"name": "HOME", "type": "HOME"}
+                            }
+                          ],
+                          "fieldName": "closeInsufficientStockOverviewPopUp",
+                          "properties": {
+                            "size": "large",
+                            "type": "primary",
+                            "mainAxisSize": "max"
+                          }
+                        }
+                      ],
+                      "showCloseButton": true,
+                      "barrierDismissible": true
+                    }
                   }
-                ],
-                "name": "DELIVERY",
-                "type": "FORM"
+                }
+              ],
+              "condition": {
+                "expression":
+                    "{{fn:hasStockForDelivery(contextData.0.eligibleProductVariants)}} == false"
               }
+            },
+            {
+              "actions": [
+                {
+                  "actionType": "NAVIGATION",
+                  "properties": {
+                    "data": [
+                      {
+                        "key": "ProjectBeneficiaryClientReferenceId",
+                        "value": "{{navigation.test0012}}"
+                      },
+                      {
+                        "key": "HouseholdClientReferenceId",
+                        "value": "{{navigation.HouseholdClientReferenceId}}"
+                      },
+                      {
+                        "key": "memberCount",
+                        "value":
+                            "{{contextData.0.household.HouseholdModel.memberCount}}"
+                      },
+                      // {
+                      //   "key": "ProjectBeneficiaryClientReferenceId",
+                      //   "value": "{{projectBeneficiaries.0.clientReferenceId}}"
+                      // },
+                      // {
+                      //   "key": "HouseholdClientReferenceId",
+                      //   "value": "{{household.0.clientReferenceId}}"
+                      // },
+                      {
+                        "key": "cycleIndex",
+                        "value": "{{contextData.0.nextCycleId}}"
+                      },
+                      {
+                        "key": "doseIndex",
+                        "value": "{{contextData.0.nextDoseId}}"
+                      },
+                      {
+                        "key": "deliveryStrategy",
+                        "value":
+                            "{{contextData.0.currentDelivery.0.deliveryStrategy}}"
+                      },
+                      {
+                        "key": "totalDosesInCycle",
+                        "value": "{{contextData.0.deliveryLength}}"
+                      },
+                      {
+                        "key": "futureDoses",
+                        "value": "{{contextData.0.futureDeliveries}}"
+                      },
+                      {
+                        "key": "qty",
+                        "value":
+                            "{{contextData.0.targetCycle.0.deliveries.0.doseCriteria.0.ProductVariants.0.quantity}}"
+                      },
+                      {
+                        "key": "beneficiaryId",
+                        "value":
+                            "{{contextData.0.headIndividual.IndividualModel.identifiers.0.identifierId}}"
+                      }
+                    ],
+                    "name": "DELIVERY",
+                    "type": "FORM"
+                  }
+                }
+              ],
+              "condition": {"expression": "DEFAULT"}
             }
           ],
           "fieldName": "registerBeneficiary",
@@ -7717,6 +7785,7 @@ final dynamic sampleFlows = {
       "description": "REGISTRATION_HOUSEHOLD_OVERVIEW_DESC",
       "initActions": [
         {"actionType": "LOAD_UNIQUE_ID_POOL"},
+        {"actionType": "LOAD_STOCK_BALANCE"},
         {
           "actionType": "SEARCH_EVENT",
           "properties": {
