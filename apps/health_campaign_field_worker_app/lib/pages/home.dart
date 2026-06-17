@@ -1854,7 +1854,22 @@ class _HomePageState extends LocalizedState<HomePage> {
       return null;
     }
 
+    // Feature source configuration:
+    // `true`  = use server JSON
+    // `false` = use local JSON (development/testing only)
+    //
+    // IMPORTANT: Set all flags to `true` before a production/release build.
+    const isRemoteComplaintFlows = false;
+    const isRemoteRegistrationFlows = false;
+    const isRemoteCloseHouseholdFlows = false;
+    const isRemoteInventoryFlows = false;
+    const isRemoteInventoryReportFlows = false;
+    //////
+    ///
+
     final Map<String, Widget> homeItemsMap = {
+      //MARK:
+
       // INFO : Need to add home items of package Here
       // i18.home.fileComplaint:
       //     homeShowcaseData.distributorFileComplaint.buildWith(
@@ -1974,7 +1989,8 @@ class _HomePageState extends LocalizedState<HomePage> {
                 );
 
                 try {
-                  if (false) {
+                  //MARK: for server json make it true and for local json make it false
+                  if (isRemoteComplaintFlows) {
                     final allSchemas =
                         json.decode(schemaJsonRaw!) as Map<String, dynamic>;
                     final data = allSchemas['COMPLAINTS'];
@@ -2153,7 +2169,7 @@ class _HomePageState extends LocalizedState<HomePage> {
                   dynamicEntityModelListener: EntityModelMapMapper(),
                 );
                 try {
-                  if (false) {
+                  if (isRemoteRegistrationFlows) {
                     final allSchemas =
                         json.decode(schemaJsonRaw!) as Map<String, dynamic>;
                     final data = allSchemas['REGISTRATION'];
@@ -2499,7 +2515,7 @@ class _HomePageState extends LocalizedState<HomePage> {
                   dynamicEntityModelListener: EntityModelMapMapper(),
                 );
                 try {
-                  if (false) {
+                  if (isRemoteCloseHouseholdFlows) {
                     final allSchemas =
                         json.decode(schemaJsonRaw!) as Map<String, dynamic>;
                     final data = allSchemas['CLOSEHOUSEHOLD'];
@@ -2756,7 +2772,7 @@ class _HomePageState extends LocalizedState<HomePage> {
             );
 
             try {
-              if (false) {
+              if (isRemoteInventoryFlows) {
                 final allSchemas =
                     json.decode(schemaJsonRaw!) as Map<String, dynamic>;
                 final data = allSchemas['INVENTORY'];
@@ -3258,7 +3274,7 @@ class _HomePageState extends LocalizedState<HomePage> {
             );
 
             try {
-              if (false) {
+              if (isRemoteInventoryReportFlows) {
                 final allSchemas =
                     json.decode(schemaJsonRaw!) as Map<String, dynamic>;
                 final data = allSchemas['STOCKREPORTS'];
