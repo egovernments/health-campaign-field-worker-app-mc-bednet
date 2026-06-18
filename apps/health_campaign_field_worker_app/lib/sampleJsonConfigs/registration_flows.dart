@@ -6376,7 +6376,7 @@ final dynamic sampleFlowss = {
                 },
                 {
                   "type": "min",
-                  "value": "0",
+                  "value": "1",
                   "message":
                       "APPONE_REGISTRATION_HOUSEHOLDDETAILS_label_memberCount_min_message"
                 },
@@ -10827,7 +10827,7 @@ final dynamic sampleFlows = {
                 },
                 {
                   "type": "min",
-                  "value": "0",
+                  "value": "1",
                   "message":
                       "APPONE_REGISTRATION_HOUSEHOLDDETAILS_label_memberCount_min_message"
                 },
