@@ -54,6 +54,10 @@ class _BoundarySelectionPageState
   var leastLevelBoundaries;
   final String setLocale = "en_BEDNET";
   bool doFilter = false;
+  // Tracks the last set of boundary codes we asked the server to localize so
+  // we only fetch when the set actually grows (each drill-down level adds its
+  // children to boundaryList), not on every rebuild/emission.
+  String? _requestedBoundaryCodesKey;
 
   @override
   void initState() {
@@ -158,6 +162,10 @@ class _BoundarySelectionPageState
                           ];
 
                           LocalizationParams().setCode(combinedCodes);
+                          // Fetch translations for the boundaries now in the
+                          // picker (grows as the user drills down), not just
+                          // the ones already cached.
+                          _requestBoundaryLocalization(combinedCodes);
                           context.read<LocalizationBloc>().add(
                               LocalizationEvent.onUpdateLocalizationIndex(
                                   index: appConfiguration.languages!.indexWhere(
@@ -1065,6 +1073,28 @@ class _BoundarySelectionPageState
     return context.isWarehouseManager || context.isHealthFacilitySupervisor;
   }
 
+  /// Downloads localizations for the boundary [combinedCodes] currently in the
+  /// picker. As the user drills down, BoundarySearchEvent appends each level's
+  /// children to boundaryList, so this fires again with the larger set and
+  /// fetches the newly-loaded codes. Guarded so we don't re-hit the server on
+  /// every rebuild. The by-codes flow itself skips codes already cached.
+  void _requestBoundaryLocalization(List<String> combinedCodes) {
+    if (combinedCodes.isEmpty) return;
+    final codesKey = combinedCodes.join(',');
+    if (codesKey == _requestedBoundaryCodesKey) return;
+    _requestedBoundaryCodesKey = codesKey;
+    context.read<LocalizationBloc>().add(
+          LocalizationEvent.onLoadLocalizationByCodes(
+            codes: codesKey,
+            module:
+                'hcm-boundary-${envConfig.variables.hierarchyType.toLowerCase()}',
+            tenantId: envConfig.variables.tenantId,
+            locale: setLocale,
+            path: Constants.localizationApiPath,
+          ),
+        );
+  }
+
   dynamic filterBoundaryLabelListBasedOnRole(
       bool doFilter, BoundaryState state) {
     final labelList = state.selectedBoundaryMap.keys.toList();
@@ -1096,6 +1126,9 @@ class _BoundarySelectionPageState
       ];
 
       LocalizationParams().setCode(combinedCodes);
+      // Fetch translations for the boundaries now in the picker (grows as the
+      // user drills down), not just the ones already cached.
+      _requestBoundaryLocalization(combinedCodes);
       context.read<LocalizationBloc>().add(
           LocalizationEvent.onUpdateLocalizationIndex(
               index: appConfiguration.languages!.indexWhere((element) =>
