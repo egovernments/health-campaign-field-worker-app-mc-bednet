@@ -28,7 +28,8 @@ import 'package:reactive_forms/reactive_forms.dart';
 import 'package:digit_data_model/models/entities/face_auth_event.dart';
 
 import '../../utils/i18_key_constants.dart' as i18;
-import '../../widgets/custom_attendance_info_card.dart' show FaceEventDot, FaceEventLegend;
+import '../../widgets/custom_attendance_info_card.dart'
+    show FaceEventDot, FaceEventLegend;
 import '../../widgets/localized.dart';
 import '../blocs/attendance_individual_bloc.dart';
 import '../router/attendance_router.gm.dart';
@@ -126,10 +127,12 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
   /// window (entryTime..exitTime) and caches them as colored dots.
   Future<void> _loadFaceEvents() async {
     try {
-      final repo = context.repository<FaceAuthEventModel, FaceAuthEventSearchModel>(context);
+      final repo = context
+          .repository<FaceAuthEventModel, FaceAuthEventSearchModel>(context);
       final projectId = AttendanceSingleton().project?.id;
 
-      debugPrint('[FaceDots] _loadFaceEvents: entry=$entryTime exit=$exitTime, projectId=$projectId');
+      debugPrint(
+          '[FaceDots] _loadFaceEvents: entry=$entryTime exit=$exitTime, projectId=$projectId');
 
       if (projectId == null) {
         debugPrint('[FaceDots] projectId is null — skipping face event load');
@@ -139,7 +142,8 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
       final allEvents = await repo.search(
         FaceAuthEventSearchModel(projectId: projectId),
       );
-      debugPrint('[FaceDots] total events for project=$projectId: ${allEvents.length}');
+      debugPrint(
+          '[FaceDots] total events for project=$projectId: ${allEvents.length}');
       // Dump a few sample events so we can see what's actually in the DB
       // and compare timestamps against the entry/exit window.
       for (final e in allEvents.take(5)) {
@@ -178,16 +182,31 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
           final typeLabel = _abbreviateEventType(e.eventType);
           switch (e.outcome) {
             case 'FACE_SUCCESS':
-              return FaceEventDot(color: Colors.green, confidence: e.confidence, eventType: typeLabel);
+              return FaceEventDot(
+                  color: Colors.green,
+                  confidence: e.confidence,
+                  eventType: typeLabel);
             case 'PIN_FALLBACK':
             case 'HCM_FALLBACK':
-              return FaceEventDot(color: Colors.orange, confidence: 0.0, label: 'PIN', eventType: typeLabel);
+              return FaceEventDot(
+                  color: Colors.orange,
+                  confidence: 0.0,
+                  label: 'PIN',
+                  eventType: typeLabel);
             case 'MISSED':
-              return FaceEventDot(color: Colors.red, confidence: 0.0, label: '–', eventType: typeLabel);
+              return FaceEventDot(
+                  color: Colors.red,
+                  confidence: 0.0,
+                  label: '–',
+                  eventType: typeLabel);
             case 'FACE_REJECTED':
-              return FaceEventDot(color: Colors.red, confidence: e.confidence, eventType: typeLabel);
+              return FaceEventDot(
+                  color: Colors.red,
+                  confidence: e.confidence,
+                  eventType: typeLabel);
             default:
-              return FaceEventDot(color: Colors.grey, confidence: 0.0, eventType: typeLabel);
+              return FaceEventDot(
+                  color: Colors.grey, confidence: 0.0, eventType: typeLabel);
           }
         }).toList();
       }
@@ -530,46 +549,65 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
                                       .textTheme.displayMedium,
                                 ),
                               ),
-                              InfiniteDateScrollInput(
-                                controller: dateController,
-                                disableScroll: false,
-                                initialValue: DateTime.now().isAfter(
-                                        DateTime.fromMillisecondsSinceEpoch(
-                                            widget.registerModel.endDate!))
-                                    ? AttendanceDateTimeManagement
-                                        .getDateFromTimestamp(
-                                            widget.registerModel.endDate!)
-                                    : DateTime.now().getFormattedDate('dd MMM yyyy'),
-                                firstDate: DateTime.fromMillisecondsSinceEpoch(
-                                    widget.registerModel.startDate!),
-                                lastDate: DateTime.now().isAfter(
-                                            DateTime.fromMillisecondsSinceEpoch(
-                                                widget
-                                                    .registerModel.endDate!)) ||
-                                        DateTime.now().isAtSameMomentAs(
-                                            DateTime.fromMillisecondsSinceEpoch(
-                                                widget.registerModel.endDate!))
-                                    ? DateTime.fromMillisecondsSinceEpoch(
-                                        widget.registerModel.endDate!)
-                                    : DateTime.now(),
-                                onChange: (String date) {
-                                  currentSelectedDate = date;
-                                  controller.clear();
-                                  if (AttendanceDateTimeManagement.isToday(
-                                      AttendanceDateTimeManagement
-                                          .getFormattedDateToDateTime(
-                                              currentSelectedDate)!)) {
-                                    setState(() {
-                                      markManualAttendance = false;
-                                    });
-                                  } else {
-                                    setState(() {
-                                      markManualAttendance = true;
-                                    });
-                                  }
-                                  setRegisterData();
-                                  _loadFaceEvents();
-                                },
+                              MediaQuery(
+                                // digit_ui_components' InfiniteDateScrollInput renders its
+                                // date strip via a carousel whose height is hardcoded to
+                                // (screenHeight * 0.13) in date_timeline.dart. That is ~4px
+                                // short of the weekday/day/month card content and triggers a
+                                // "BOTTOM OVERFLOWED" RenderFlex error on the selected card.
+                                // The package exposes no height option, so report a slightly
+                                // taller screen height to just this subtree, giving the
+                                // carousel enough room for the cards to fit.
+                                data: MediaQuery.of(context).copyWith(
+                                  size: Size(
+                                    MediaQuery.of(context).size.width,
+                                    MediaQuery.of(context).size.height + 150,
+                                  ),
+                                ),
+                                child: InfiniteDateScrollInput(
+                                  controller: dateController,
+                                  disableScroll: false,
+                                  initialValue: DateTime.now().isAfter(
+                                          DateTime.fromMillisecondsSinceEpoch(
+                                              widget.registerModel.endDate!))
+                                      ? AttendanceDateTimeManagement
+                                          .getDateFromTimestamp(
+                                              widget.registerModel.endDate!)
+                                      : DateTime.now()
+                                          .getFormattedDate('dd MMM yyyy'),
+                                  firstDate:
+                                      DateTime.fromMillisecondsSinceEpoch(
+                                          widget.registerModel.startDate!),
+                                  lastDate: DateTime.now().isAfter(DateTime
+                                              .fromMillisecondsSinceEpoch(widget
+                                                  .registerModel.endDate!)) ||
+                                          DateTime.now().isAtSameMomentAs(
+                                              DateTime
+                                                  .fromMillisecondsSinceEpoch(
+                                                      widget.registerModel
+                                                          .endDate!))
+                                      ? DateTime.fromMillisecondsSinceEpoch(
+                                          widget.registerModel.endDate!)
+                                      : DateTime.now(),
+                                  onChange: (String date) {
+                                    currentSelectedDate = date;
+                                    controller.clear();
+                                    if (AttendanceDateTimeManagement.isToday(
+                                        AttendanceDateTimeManagement
+                                            .getFormattedDateToDateTime(
+                                                currentSelectedDate)!)) {
+                                      setState(() {
+                                        markManualAttendance = false;
+                                      });
+                                    } else {
+                                      setState(() {
+                                        markManualAttendance = true;
+                                      });
+                                    }
+                                    setRegisterData();
+                                    _loadFaceEvents();
+                                  },
+                                ),
                               ),
                               DigitCard(
                                 margin: EdgeInsets.only(
@@ -782,8 +820,8 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
                                             <String, List<dynamic>>{};
                                         for (final a in sortedAttendees) {
                                           teamGroups
-                                              .putIfAbsent(
-                                                  (a.tag ?? '').trim(), () => [])
+                                              .putIfAbsent((a.tag ?? '').trim(),
+                                                  () => [])
                                               .add(a);
                                         }
                                         Widget buildAttendeeCard(
@@ -805,9 +843,11 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
                                                       i18.attendance.userId,
                                                     ),
                                             status: individual.status,
-                                            faceEventDots: individual.individualId != null
-                                                ? _faceEventDots[individual.individualId]
-                                                : null,
+                                            faceEventDots:
+                                                individual.individualId != null
+                                                    ? _faceEventDots[
+                                                        individual.individualId]
+                                                    : null,
                                             markManualAttendance:
                                                 AttendanceDateTimeManagement.isToday(
                                                             AttendanceDateTimeManagement
@@ -838,8 +878,9 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
                                               // attendance logs.
                                               final referenceSignature =
                                                   _signatures[individualId] ??
-                                                      _extractSignature(individual
-                                                          .additionalFields);
+                                                      _extractSignature(
+                                                          individual
+                                                              .additionalFields);
 
                                               final captured =
                                                   await showSignatureCaptureDialog(
@@ -887,7 +928,8 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
                                               context
                                                   .read<
                                                       AttendanceIndividualBloc>()
-                                                  .add(_buildMarkEvent(individual,
+                                                  .add(_buildMarkEvent(
+                                                      individual,
                                                       signature: captured,
                                                       isFirstSignature:
                                                           referenceSignature ==
@@ -926,6 +968,7 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
                                             viewOnly: viewOnly,
                                           );
                                         }
+
                                         final sections = <Widget>[];
                                         teamGroups.forEach((team, members) {
                                           // Outer Team card: holds the team
@@ -956,8 +999,8 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
                                                   padding:
                                                       const EdgeInsets.all(8),
                                                   decoration: BoxDecoration(
-                                                    color: const Color(
-                                                        0xFFF7F7F7),
+                                                    color:
+                                                        const Color(0xFFF7F7F7),
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                             8),
@@ -1356,11 +1399,16 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
 
   String _abbreviateEventType(String eventType) {
     switch (eventType) {
-      case 'LOGIN':       return 'L';
-      case 'CHECK_IN':    return 'CI';
-      case 'RE_VERIFY':   return 'RV';
-      case 'ENROLLMENT':  return 'EN';
-      default:            return eventType.isNotEmpty ? eventType[0] : '';
+      case 'LOGIN':
+        return 'L';
+      case 'CHECK_IN':
+        return 'CI';
+      case 'RE_VERIFY':
+        return 'RV';
+      case 'ENROLLMENT':
+        return 'EN';
+      default:
+        return eventType.isNotEmpty ? eventType[0] : '';
     }
   }
 
