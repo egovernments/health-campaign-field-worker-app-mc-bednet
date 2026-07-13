@@ -51,7 +51,7 @@ class _NonMobileUserCardState extends LocalizedState<NonMobileUserCard> {
     return DigitCard(
       margin: const EdgeInsets.all(spacer2),
       children: [
-        _buildCenteredTextBlock(widget.userName, "${widget.gender}, ${widget.age}", widget.mobileNumber, context),
+        _buildCenteredTextBlock(widget.userName, widget.gender, widget.mobileNumber, context),
         _buildIdContainer(context, textTheme),
         _buildFaceEnrollButton(context),
         _buildQRButton(context),
