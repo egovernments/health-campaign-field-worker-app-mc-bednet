@@ -153,9 +153,9 @@ class MainApplicationState extends State<MainApplication>
                   // Use the single shared Location client so all consumers
                   // stream from one native request (no GPS churn); start
                   // continuous balanced tracking once permission is granted.
-                  final bloc = LocationBloc(
-                      location: LocationService.instance.location)
-                    ..add(const LoadLocationEvent());
+                  final bloc =
+                      LocationBloc(location: LocationService.instance.location)
+                        ..add(const LoadLocationEvent());
                   bloc.stream
                       .firstWhere((s) => s.hasPermissions)
                       .then((_) => LocationService.instance.ensureTracking())

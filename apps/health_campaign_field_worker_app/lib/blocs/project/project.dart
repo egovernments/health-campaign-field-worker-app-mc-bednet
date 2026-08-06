@@ -25,6 +25,7 @@ import 'package:transit_post/data/repositories/local/user_action.dart';
 import 'package:transit_post/data/repositories/remote/user_action.dart';
 
 import '../../../models/app_config/app_config_model.dart' as app_configuration;
+import '../../data/local_store/app_shared_preferences.dart';
 import '../../data/local_store/no_sql/schema/app_configuration.dart';
 import '../../data/local_store/no_sql/schema/row_versions.dart';
 import '../../data/local_store/no_sql/schema/service_registry.dart';
@@ -40,6 +41,7 @@ import '../../utils/download_image.dart';
 import '../../utils/environment_config.dart';
 import '../../utils/least_level_boundary_singleton.dart';
 import '../../utils/stock_calculation_utils.dart';
+import '../../utils/stock_downsync_cursor.dart';
 import '../../utils/utils.dart';
 import '../auth/auth.dart';
 import '../push_notification/push_notification.dart';
@@ -372,11 +374,13 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     projects.removeDuplicates((element) => element.id);
 
     final selectedProject = await localSecureStore.selectedProject;
+    final allProjectTypes = await localSecureStore.getAllProjectTypes;
     emit(
       ProjectState(
         loading: false,
         projects: projects,
         selectedProject: selectedProject,
+        allProjectTypes: allProjectTypes,
       ),
     );
 
@@ -388,6 +392,14 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     );
     LeastLevelBoundarySingleton()
         .setBoundary(boundaries: findLeastLevelBoundaries(boundaries));
+  }
+
+  ProjectCycle? _getCurrentCycle(List<ProjectCycle> allCycles) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    return allCycles
+        .where((cycle) => cycle.startDate <= now && cycle.endDate >= now)
+        .firstOrNull;
   }
 
   FutureOr<void> _loadProjectFacilities(ProjectModel project) async {
@@ -574,7 +586,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       final allEvents = await faceAuthEventRemoteRepository!.search(
         FaceAuthEventSearchModel(projectId: projectId),
       );
-      debugPrint('[FaceAuth] projectId=$projectId → ${allEvents.length} total events');
+      debugPrint(
+          '[FaceAuth] projectId=$projectId → ${allEvents.length} total events');
 
       // Rewrite old-format events where individualId is a system user UUID.
       final normalizedEvents = allEvents.map((e) {
@@ -584,7 +597,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
 
       if (normalizedEvents.isNotEmpty) {
         await faceAuthEventLocalRepository!.bulkCreate(normalizedEvents);
-        debugPrint('[FaceAuth] stored ${normalizedEvents.length} events locally');
+        debugPrint(
+            '[FaceAuth] stored ${normalizedEvents.length} events locally');
       }
     } catch (e) {
       debugPrint('[FaceAuth] fetch for projectId=$projectId failed: $e');
@@ -964,6 +978,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
             .setBoundary(boundaries: findLeastLevelBoundaries(boundaries));
         await localSecureStore.setSelectedProject(event.model);
         await localSecureStore.setSelectedProjectType(reqProjectType);
+        await localSecureStore
+            .setAllProjectTypes(projectType.projectTypeWrapper?.projectTypes);
       }
       await localSecureStore.setProjectSetUpComplete(event.model.id, true);
     } catch (_) {
@@ -1011,9 +1027,11 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     }
 
     final getSelectedProject = await localSecureStore.selectedProject;
+    final allProjectTypes = await localSecureStore.getAllProjectTypes;
 
     emit(state.copyWith(
       selectedProject: getSelectedProject,
+      allProjectTypes: allProjectTypes,
       loading: false,
       syncError: null,
     ));
@@ -1063,20 +1081,41 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
 
       if (receiverIds.isEmpty) return;
 
+      final now = DateTime.now().millisecondsSinceEpoch;
+      ProjectCycle? currentCycle =
+          project.additionalDetails?.projectType?.cycles
+              ?.where(
+                (cycle) => cycle.startDate <= now && cycle.endDate >= now,
+              )
+              .firstOrNull;
+
+      int? currentCycleStartDate = currentCycle?.startDate;
+
+      currentCycleStartDate ??= project
+          .additionalDetails?.projectType?.cycles?.firstOrNull?.startDate;
+
       final stockSearchModel = StockSearchModel(
         receiverId: receiverIds.first,
         senderId: receiverIds.first,
         campaignNumber: project.referenceID,
       );
 
+      // Cursor is per user + cycle so a second user on the same device
+      // still downloads their own stock from cycle start.
+      final cursorKey = StockDownsyncCursor.key(
+        project.id,
+        userObject.uuid,
+        currentCycle?.id ?? 0,
+      );
+      final lastSyncedTime = StockDownsyncCursor.resolveCutoff(
+        storedTime: AppSharedPreferences().getStockDownsyncTime(cursorKey),
+        cycleStartDate: currentCycleStartDate,
+      );
+
       final existingDownSyncData =
           await downSyncLocalRepository.search(DownsyncSearchModel(
         locality: localityKey,
       ));
-
-      final lastSyncedTime = existingDownSyncData.isEmpty
-          ? null
-          : existingDownSyncData.first.lastSyncedTime;
 
       if (existingDownSyncData.isEmpty) {
         await downSyncLocalRepository.create(DownsyncModel(
@@ -1101,6 +1140,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       const batchSize = 50;
       int offset = 0;
       int syncedCount = 0;
+      final downloadedStocks = <String, StockModel>{};
       final currentSyncTime = DateTime.now().millisecondsSinceEpoch;
 
       while (syncedCount < totalCount) {
@@ -1115,6 +1155,9 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         if (stockEntries.isEmpty) break;
 
         await stockLocalRepository.bulkCreate(stockEntries);
+        for (final stock in stockEntries) {
+          downloadedStocks[stock.clientReferenceId] = stock;
+        }
 
         await downSyncLocalRepository.update(DownsyncModel(
           offset: 0,
@@ -1126,6 +1169,21 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
 
         offset += stockEntries.length;
         syncedCount += stockEntries.length;
+      }
+
+      // Advance the per-user cursor to the latest server lastModifiedTime
+      // among the downloaded records — the clock domain the server's
+      // lastChangedSince filter compares against. When nothing usable came
+      // back (e.g. an empty page despite a non-zero count) keep the stored
+      // cursor so the window is retried next sync instead of skipping the
+      // records forever.
+      final nextCursorTime = StockDownsyncCursor.nextCursor(
+        stored: AppSharedPreferences().getStockDownsyncTime(cursorKey),
+        stocks: downloadedStocks.values,
+      );
+      if (nextCursorTime != null) {
+        await AppSharedPreferences().setStockDownsyncTime(cursorKey,
+            nextCursorTime + 1); // +1 to avoid re-downloading the same record
       }
 
       await downSyncStockBalances(project);
@@ -1239,146 +1297,146 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
   /// Creates or updates UserAction balance records after stock downsync.
   /// This ensures that balance records exist for all facility × product variant combinations
   /// based on the locally available stock data.
-  Future<void> _createStockBalanceUserActions({
-    required ProjectModel project,
-    required List<String> receiverIds,
-    required List<String> productVariantIds,
-    required Iterable<String> userRoles,
-    required UserRequestModel? userObject,
-  }) async {
-    try {
-      final isDistributor =
-          userRoles.contains(RolesType.distributor.toValue()) ||
-              userRoles.contains(RolesType.communityDistributor.toValue());
+  // Future<void> _createStockBalanceUserActions({
+  //   required ProjectModel project,
+  //   required List<String> receiverIds,
+  //   required List<String> productVariantIds,
+  //   required Iterable<String> userRoles,
+  //   required UserRequestModel? userObject,
+  // }) async {
+  //   try {
+  //     final isDistributor =
+  //         userRoles.contains(RolesType.distributor.toValue()) ||
+  //             userRoles.contains(RolesType.communityDistributor.toValue());
 
-      final projectFacilities = await projectFacilityLocalRepository.search(
-        ProjectFacilitySearchModel(projectId: [project.id]),
-      );
+  //     final projectFacilities = await projectFacilityLocalRepository.search(
+  //       ProjectFacilitySearchModel(projectId: [project.id]),
+  //     );
 
-      final currentFacilities = projectFacilities.where((pf) {
-        final facilityLevel = pf.additionalFields?.fields
-            .where((f) => f.key == 'facilityLevel')
-            .firstOrNull
-            ?.value;
-        return facilityLevel == null || facilityLevel == 'current';
-      }).toList();
+  //     final currentFacilities = projectFacilities.where((pf) {
+  //       final facilityLevel = pf.additionalFields?.fields
+  //           .where((f) => f.key == 'facilityLevel')
+  //           .firstOrNull
+  //           ?.value;
+  //       return facilityLevel == null || facilityLevel == 'current';
+  //     }).toList();
 
-      List<String> facilityIds;
-      if (isDistributor) {
-        facilityIds = [userObject?.uuid ?? ''];
-      } else {
-        facilityIds = currentFacilities
-            .map((e) => e.facilityId)
-            .whereType<String>()
-            .toSet()
-            .toList();
-      }
+  //     List<String> facilityIds;
+  //     if (isDistributor) {
+  //       facilityIds = [userObject?.uuid ?? ''];
+  //     } else {
+  //       facilityIds = currentFacilities
+  //           .map((e) => e.facilityId)
+  //           .whereType<String>()
+  //           .toSet()
+  //           .toList();
+  //     }
 
-      if (facilityIds.isEmpty || facilityIds.first.isEmpty) return;
-      if (productVariantIds.isEmpty) return;
+  //     if (facilityIds.isEmpty || facilityIds.first.isEmpty) return;
+  //     if (productVariantIds.isEmpty) return;
 
-      // Calculate balance for each facility × product variant combination
-      for (final facilityId in facilityIds) {
-        for (final productVariantId in productVariantIds) {
-          // Get all stocks for this facility and product
-          final receivedStocks = await stockLocalRepository.search(
-            StockSearchModel(receiverId: facilityId),
-          );
-          final sentStocks = await stockLocalRepository.search(
-            StockSearchModel(senderId: facilityId),
-          );
+  //     // Calculate balance for each facility × product variant combination
+  //     for (final facilityId in facilityIds) {
+  //       for (final productVariantId in productVariantIds) {
+  //         // Get all stocks for this facility and product
+  //         final receivedStocks = await stockLocalRepository.search(
+  //           StockSearchModel(receiverId: facilityId),
+  //         );
+  //         final sentStocks = await stockLocalRepository.search(
+  //           StockSearchModel(senderId: facilityId),
+  //         );
 
-          final allStocksMap = <String, StockModel>{};
-          for (final stock in receivedStocks) {
-            if (stock.productVariantId == productVariantId) {
-              allStocksMap[stock.clientReferenceId] = stock;
-            }
-          }
-          for (final stock in sentStocks) {
-            if (stock.productVariantId == productVariantId) {
-              allStocksMap[stock.clientReferenceId] = stock;
-            }
-          }
-          final allStocks = allStocksMap.values.toList();
+  //         final allStocksMap = <String, StockModel>{};
+  //         for (final stock in receivedStocks) {
+  //           if (stock.productVariantId == productVariantId) {
+  //             allStocksMap[stock.clientReferenceId] = stock;
+  //           }
+  //         }
+  //         for (final stock in sentStocks) {
+  //           if (stock.productVariantId == productVariantId) {
+  //             allStocksMap[stock.clientReferenceId] = stock;
+  //           }
+  //         }
+  //         final allStocks = allStocksMap.values.toList();
 
-          // Calculate the balance
-          final metrics = StockCalculationUtils.calculateStockMetrics(
-            stockList: allStocks,
-            facilityId: facilityId,
-            productId: productVariantId,
-            isDistributor: isDistributor,
-          );
+  //         // Calculate the balance
+  //         final metrics = StockCalculationUtils.calculateStockMetrics(
+  //           stockList: allStocks,
+  //           facilityId: facilityId,
+  //           productId: productVariantId,
+  //           isDistributor: isDistributor,
+  //         );
 
-          final balance = metrics['stockInHand'] ?? 0.0;
-          final balanceKey = generateBalanceKey(facilityId, productVariantId,
-              project.referenceID, userObject?.id);
+  //         final balance = metrics['stockInHand'] ?? 0.0;
+  //         final balanceKey = generateBalanceKey(facilityId, productVariantId,
+  //             project.referenceID, userObject?.id);
 
-          // Check if UserAction already exists
-          final existingActions = await userActionLocalRepository.search(
-            UserActionSearchModel(clientReferenceId: [balanceKey]),
-          );
+  //         // Check if UserAction already exists
+  //         final existingActions = await userActionLocalRepository.search(
+  //           UserActionSearchModel(clientReferenceId: [balanceKey]),
+  //         );
 
-          final now = DateTime.now().millisecondsSinceEpoch;
-          final loggedInUserUuid = userObject?.uuid ?? '';
+  //         final now = DateTime.now().millisecondsSinceEpoch;
+  //         final loggedInUserUuid = userObject?.uuid ?? '';
 
-          final balanceAction = UserActionModel(
-            clientReferenceId: balanceKey,
-            action: 'STOCK_BALANCE',
-            projectId: project.id,
-            boundaryCode: project.address?.boundary ?? "",
-            latitude: 0.0,
-            longitude: 0.0,
-            locationAccuracy: 0.0,
-            isSync: false,
-            timestamp: now,
-            id: existingActions.isNotEmpty ? existingActions.first.id : null,
-            rowVersion: existingActions.isNotEmpty
-                ? existingActions.first.rowVersion
-                : null,
-            tenantId: userObject?.tenantId ?? '',
-            nonRecoverableError: false,
-            additionalFields: UserActionAdditionalFields(
-              version: 1,
-              fields: [
-                AdditionalField('balance', balance.toString()),
-                AdditionalField('facilityId', facilityId),
-                AdditionalField('productVariantId', productVariantId),
-              ],
-            ),
-            auditDetails: existingActions.isNotEmpty
-                ? existingActions.first.auditDetails
-                : AuditDetails(createdBy: loggedInUserUuid, createdTime: now),
-            clientAuditDetails: existingActions.isNotEmpty
-                ? existingActions.first.clientAuditDetails
-                : ClientAuditDetails(
-                    createdBy: loggedInUserUuid,
-                    createdTime: now,
-                    lastModifiedBy: loggedInUserUuid,
-                    lastModifiedTime: now,
-                  ),
-          );
+  //         final balanceAction = UserActionModel(
+  //           clientReferenceId: balanceKey,
+  //           action: 'STOCK_BALANCE',
+  //           projectId: project.id,
+  //           boundaryCode: project.address?.boundary ?? "",
+  //           latitude: 0.0,
+  //           longitude: 0.0,
+  //           locationAccuracy: 0.0,
+  //           isSync: false,
+  //           timestamp: now,
+  //           id: existingActions.isNotEmpty ? existingActions.first.id : null,
+  //           rowVersion: existingActions.isNotEmpty
+  //               ? existingActions.first.rowVersion
+  //               : null,
+  //           tenantId: userObject?.tenantId ?? '',
+  //           nonRecoverableError: false,
+  //           additionalFields: UserActionAdditionalFields(
+  //             version: 1,
+  //             fields: [
+  //               AdditionalField('balance', balance.toString()),
+  //               AdditionalField('facilityId', facilityId),
+  //               AdditionalField('productVariantId', productVariantId),
+  //             ],
+  //           ),
+  //           auditDetails: existingActions.isNotEmpty
+  //               ? existingActions.first.auditDetails
+  //               : AuditDetails(createdBy: loggedInUserUuid, createdTime: now),
+  //           clientAuditDetails: existingActions.isNotEmpty
+  //               ? existingActions.first.clientAuditDetails
+  //               : ClientAuditDetails(
+  //                   createdBy: loggedInUserUuid,
+  //                   createdTime: now,
+  //                   lastModifiedBy: loggedInUserUuid,
+  //                   lastModifiedTime: now,
+  //                 ),
+  //         );
 
-          /// INFO: need to revisit as user action is getting create and update to server also
-          if (existingActions.isNotEmpty) {
-            await userActionLocalRepository.update(
-              balanceAction,
-              createOpLog: true,
-            );
-          } else {
-            await userActionLocalRepository.create(
-              balanceAction,
-              createOpLog: true,
-            );
-          }
+  //         /// INFO: need to revisit as user action is getting create and update to server also
+  //         if (existingActions.isNotEmpty) {
+  //           await userActionLocalRepository.update(
+  //             balanceAction,
+  //             createOpLog: true,
+  //           );
+  //         } else {
+  //           await userActionLocalRepository.create(
+  //             balanceAction,
+  //             createOpLog: true,
+  //           );
+  //         }
 
-          debugPrint(
-              'STOCK_BALANCE_INIT: Created/updated balance for $facilityId/$productVariantId = $balance');
-        }
-      }
-    } catch (e) {
-      debugPrint('STOCK_BALANCE_INIT: Error - $e');
-    }
-  }
+  //         debugPrint(
+  //             'STOCK_BALANCE_INIT: Created/updated balance for $facilityId/$productVariantId = $balance');
+  //       }
+  //     }
+  //   } catch (e) {
+  //     debugPrint('STOCK_BALANCE_INIT: Error - $e');
+  //   }
+  // }
 
   Future<void> storeSchema(dynamic schemaJson) async {
     final prefs = await SharedPreferences.getInstance();
@@ -1587,6 +1645,7 @@ class ProjectState with _$ProjectState {
 
   const factory ProjectState({
     @Default([]) List<ProjectModel> projects,
+    List<ProjectType>? allProjectTypes,
     ProjectType? projectType,
     ProjectCycle? selectedCycle,
     ProjectModel? selectedProject,
