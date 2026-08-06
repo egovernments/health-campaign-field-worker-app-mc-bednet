@@ -5,6 +5,10 @@ import 'package:drift/drift.dart';
 import '../../../../models/entities/address_type.dart';
 
 @DataClassName('Addres')
+@TableIndex(
+    name: 'address_localityboundarycode', columns: {#localityBoundaryCode})
+@TableIndex(
+    name: 'address_relatedclientref', columns: {#relatedClientReferenceId})
 class Address extends Table {
   TextColumn get id => text().nullable()();
   TextColumn get relatedClientReferenceId => text().nullable()();
@@ -22,7 +26,8 @@ class Address extends Table {
   TextColumn get boundaryType => text().nullable()();
   TextColumn get boundary => text().nullable()();
   TextColumn get auditCreatedBy => text().nullable()();
-  BoolColumn get nonRecoverableError => boolean().nullable().withDefault(const Constant(false))();
+  BoolColumn get nonRecoverableError =>
+      boolean().nullable().withDefault(const Constant(false))();
   IntColumn get auditCreatedTime => integer().nullable()();
   IntColumn get clientCreatedTime => integer().nullable()();
   TextColumn get clientModifiedBy => text().nullable()();
@@ -33,12 +38,16 @@ class Address extends Table {
   TextColumn get localityBoundaryCode => text().nullable()();
   TextColumn get localityBoundaryName => text().nullable()();
   TextColumn get tenantId => text().nullable()();
-  BoolColumn get isDeleted => boolean().nullable().withDefault(const Constant(false))();
+  BoolColumn get isDeleted =>
+      boolean().nullable().withDefault(const Constant(false))();
   IntColumn get rowVersion => integer().nullable()();
   IntColumn get type => intEnum<AddressType>().nullable()();
-  
+
   TextColumn get additionalFields => text().nullable()();
 
   @override
-  Set<Column> get primaryKey => { relatedClientReferenceId, auditCreatedBy,  };
+  Set<Column> get primaryKey => {
+        relatedClientReferenceId,
+        auditCreatedBy,
+      };
 }
