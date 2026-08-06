@@ -254,10 +254,28 @@ class _StockBalanceCardState extends LocalizedState<StockBalanceCard> {
       allStocksMap[stock.clientReferenceId] = stock;
     }
     final allStocks = allStocksMap.values.toList();
+    final selectedCycle = context.selectedCycle;
+
+    final filteredStocks = allStocks.where((stock) {
+      final cycleStartDate = selectedCycle?.startDate;
+      final cycleEndDate = selectedCycle?.endDate;
+
+      if (cycleStartDate == null || cycleEndDate == null) {
+        return true;
+      }
+
+      final stockEntryDate = stock.dateOfEntryTime?.millisecondsSinceEpoch ??
+          stock.auditDetails?.lastModifiedTime ??
+          stock.clientAuditDetails?.lastModifiedTime;
+
+      if (stockEntryDate == null) return false;
+
+      return stockEntryDate >= cycleStartDate && stockEntryDate <= cycleEndDate;
+    }).toList();
 
     final productIds = _productVariants.map((pv) => pv.id).toList();
     final balances = StockCalculationUtils.calculateStockInHandForProducts(
-      stockList: allStocks,
+      stockList: filteredStocks,
       facilityId: effectiveFacilityId,
       productIds: productIds,
       loggedInUserUuid: context.loggedInUserUuid,
@@ -272,8 +290,6 @@ class _StockBalanceCardState extends LocalizedState<StockBalanceCard> {
       });
     }
   }
-
-  
 
   Future<Map<String, double>> _loadUserActionBalances(
     UserActionLocalRepository userActionRepo,
