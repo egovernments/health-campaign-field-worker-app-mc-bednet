@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:digit_crud_bloc/digit_crud_bloc.dart';
@@ -13,7 +14,6 @@ import 'package:digit_ui_components/digit_components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
-import 'package:transit_post/data/repositories/local/user_action.dart';
 
 import '../../models/entities/roles_type.dart';
 import '../../utils/extensions/extensions.dart';
@@ -47,13 +47,65 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
   // Stock calculation state
   List<ProductVariantModel> _selectedProducts = [];
   Map<String, double> _stockInHandMap = {};
-  bool _stockSearchTriggered = false;
+  StreamSubscription<dynamic>? _recordTypeSubscription;
+  String? _lastRecordType;
+
+  List<ValidationRule> _normalizeValidationRules(dynamic validations) {
+    if (validations == null) return const [];
+
+    final normalized = <ValidationRule>[];
+
+    if (validations is List) {
+      for (final rule in validations) {
+        if (rule is ValidationRule) {
+          normalized.add(rule);
+        } else if (rule is Map) {
+          try {
+            normalized.add(
+              ValidationRule.fromJson(
+                Map<String, dynamic>.from(rule as Map),
+              ),
+            );
+          } catch (_) {
+            // Ignore malformed validation entries from dynamic schema payloads.
+          }
+        }
+      }
+    }
+
+    return normalized;
+  }
+
+  String _buildDynamicMaxMessage(
+    int maxValue, {
+    String messageKey = 'QUANTITY_CANNOT_EXCEED_STOCK_IN_HAND_VALUE',
+  }) {
+    var message = localizations.translate(messageKey);
+
+    if (message.contains('{maxValue}')) {
+      return message.replaceAll('{maxValue}', maxValue.toString());
+    }
+    if (message.contains('{max}')) {
+      return message.replaceAll('{max}', maxValue.toString());
+    }
+    if (message.contains('10000000')) {
+      return message.replaceAll('10000000', maxValue.toString());
+    }
+
+    return '$message ($maxValue)';
+  }
 
   @override
   void initState() {
     super.initState();
     // Don't call _initializeFromFormData here - localizations is not available yet
     // It will be called in build() when localizations is ready
+  }
+
+  @override
+  void dispose() {
+    _recordTypeSubscription?.cancel();
+    super.dispose();
   }
 
   /// Gets the facility ID from the previous page's form data (warehouseDetails.facilityToWhich)
@@ -214,10 +266,6 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
 
       // Update FormsBloc with stock in hand data
       _updateStockInHandInFormsBloc();
-
-      setState(() {
-        _stockSearchTriggered = true;
-      });
     } catch (e, stackTrace) {
       debugPrint('ProductSelectionCard: ERROR in stock search: $e');
       debugPrint('Stack trace: $stackTrace');
@@ -289,6 +337,10 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
     }
 
     if (multiEntityPageKey == null || multiEntityPage?.properties == null) {
+      if (widget.pageSchema == 'RECORDLESSEXCESS') {
+        _updateLessExcessQuantityValidation(formsBloc, schema);
+        return;
+      }
       debugPrint(
           'ProductSelectionCard: ERROR - No page with multiEntityConfig found');
       return;
@@ -448,6 +500,169 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
     }
   }
 
+  void _updateLessExcessQuantityValidation(
+    FormsBloc formsBloc,
+    dynamic schema,
+  ) {
+    final page = schema.pages['lessExcessDetails'];
+    final properties = page?.properties;
+    if (properties == null) {
+      debugPrint(
+          'ProductSelectionCard: lessExcessDetails page/properties not found');
+      return;
+    }
+
+    final quantityField = properties['quantity'];
+    if (quantityField == null) {
+      debugPrint(
+          'ProductSelectionCard: quantity field not found for less/excess');
+      return;
+    }
+
+    final selectedProduct =
+        _selectedProducts.isNotEmpty ? _selectedProducts.first : null;
+    final hasSelectedProduct = selectedProduct != null;
+    final stockInHand = selectedProduct == null
+        ? 0.0
+        : (_stockInHandMap[selectedProduct.id] ?? 0.0);
+
+    final existingValidations =
+        _normalizeValidationRules(quantityField.validations);
+    final configuredMax = existingValidations
+        .firstWhere(
+          (v) => v.type == 'max' || v.type == 'maxValue',
+          orElse: () => ValidationRule(
+            type: 'max',
+            value: quantityField.max ?? quantityField.maxValue ?? 5,
+          ),
+        )
+        .value;
+    final int configuredMaxInt = configuredMax is int
+        ? configuredMax
+        : int.tryParse(configuredMax?.toString() ?? '') ??
+            (quantityField.max ?? quantityField.maxValue ?? 5);
+
+    final boundedStock = max(0, stockInHand.floor());
+    final maxValue = hasSelectedProduct
+        ? min(configuredMaxInt, boundedStock)
+        : configuredMaxInt;
+    final isConfiguredCapApplied = maxValue == configuredMaxInt;
+
+    final filteredValidations = existingValidations
+        .where((v) => v.type != 'max' && v.type != 'maxValue')
+        .toList();
+
+    final newValidations = [
+      ...filteredValidations,
+      ValidationRule(
+        type: 'max',
+        value: maxValue,
+        message: maxValue > 0
+            ? (isConfiguredCapApplied
+                ? _buildDynamicMaxMessage(
+                    maxValue,
+                    messageKey: 'QUANTITY_CANNOT_EXCEED',
+                  )
+                : _buildDynamicMaxMessage(
+                    maxValue,
+                    messageKey: 'QUANTITY_CANNOT_EXCEED_STOCK_IN_HAND_VALUE',
+                  ))
+            : localizations.translate('NO_STOCK_AVAILABLE_IN_HAND'),
+      ),
+    ];
+
+    final updatedQuantityField =
+        quantityField.copyWith(validations: newValidations);
+    final updatedProperties = Map<String, PropertySchema>.from(properties);
+    updatedProperties['quantity'] = updatedQuantityField;
+
+    final updatedPage = page.copyWith(properties: updatedProperties);
+    final updatedPages = Map<String, PropertySchema>.from(schema.pages);
+    updatedPages['lessExcessDetails'] = updatedPage;
+
+    final updatedSchema = schema.copyWith(pages: updatedPages);
+    formsBloc.add(
+      FormsEvent.update(
+        schemaKey: widget.pageSchema,
+        schema: updatedSchema,
+      ),
+    );
+
+    try {
+      final form = ReactiveForm.of(context, listen: false);
+      if (form is! FormGroup) return;
+      final quantityControl = form.control('quantity');
+      final currentValue =
+          int.tryParse(quantityControl.value?.toString() ?? '');
+      if (currentValue != null && currentValue > maxValue) {
+        quantityControl.value = null;
+        formsBloc.add(
+          FormsEvent.updateField(
+            schemaKey: widget.pageSchema,
+            context: context,
+            key: 'quantity',
+            value: null,
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      debugPrint('ProductSelectionCard: ERROR in stock search: $e');
+      debugPrint('Stack trace: $stackTrace');
+    }
+  }
+
+  void _setupLessExcessRecordTypeListener() {
+    if (widget.pageSchema != 'RECORDLESSEXCESS' ||
+        _recordTypeSubscription != null) {
+      return;
+    }
+
+    try {
+      final form = ReactiveForm.of(context, listen: false);
+      if (form is! FormGroup) return;
+      final recordTypeControl = form.control('recordType');
+      _lastRecordType = recordTypeControl.value?.toString();
+
+      _recordTypeSubscription = recordTypeControl.valueChanges.listen((value) {
+        final currentType = value?.toString();
+        final hasTypeSwitched = _lastRecordType != null &&
+            currentType != null &&
+            currentType != _lastRecordType;
+
+        if (hasTypeSwitched) {
+          _clearLessExcessQuantityForSafety();
+        }
+
+        _lastRecordType = currentType;
+      });
+    } catch (_) {
+      // Ignore if controls are not mounted yet; build() will retry.
+    }
+  }
+
+  void _clearLessExcessQuantityForSafety() {
+    final formsBloc = context.read<FormsBloc>();
+    try {
+      final form = ReactiveForm.of(context, listen: false);
+      if (form is! FormGroup) return;
+      final quantityControl = form.control('quantity');
+      quantityControl.value = null;
+      quantityControl.markAsTouched();
+      quantityControl.markAsDirty();
+    } catch (_) {
+      // Ignore if controls are not available yet.
+    }
+
+    formsBloc.add(
+      FormsEvent.updateField(
+        schemaKey: widget.pageSchema,
+        context: context,
+        key: 'quantity',
+        value: null,
+      ),
+    );
+  }
+
   void _initializeFromFormData(List<dynamic>? productVariants) {
     if (_initialized) return;
 
@@ -597,6 +812,8 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
 
   @override
   Widget build(BuildContext context) {
+    _setupLessExcessRecordTypeListener();
+
     // Get schema from FormsBloc
     final pages =
         context.read<FormsBloc>().state.cachedSchemas[widget.pageSchema]?.pages;
@@ -718,7 +935,7 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
 
               // Find selected models from productVariants
               final selectedModels = selectedValues
-                  .map((v) => productVariants!
+                  .map((v) => productVariants
                       .map((e) => e as ProductVariantModel)
                       .firstWhere((m) => m.id == v.code))
                   .toList();
@@ -726,7 +943,6 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
               // Update selected products for stock calculation
               setState(() {
                 _selectedProducts = selectedModels;
-                _stockSearchTriggered = false; // Reset to trigger new search
               });
 
               // Update form control with list of models
