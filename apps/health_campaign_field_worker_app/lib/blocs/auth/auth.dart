@@ -8,7 +8,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:isar/isar.dart';
 
-import '../../data/local_store/no_sql/schema/app_configuration.dart';
 import '../../data/local_store/secure_store/secure_store.dart';
 import '../../data/repositories/remote/auth.dart';
 import '../../data/repositories/remote/mdms.dart';
@@ -30,12 +29,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final RemoteRepository<IndividualModel, IndividualSearchModel>
       individualRemoteRepository;
   final Isar isar;
+  final LocalSqlDataStore sql;
 
   AuthBloc({
     required this.authRepository,
     required this.mdmsRepository,
     required this.individualRemoteRepository,
     required this.isar,
+    required this.sql,
     LocalSecureStore? localSecureStore,
   })  : localSecureStore = LocalSecureStore.instance,
         super(const AuthUnauthenticatedState()) {
@@ -152,6 +153,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   //_onLogout event logs out the user and deletes the saved user details from local storage
   FutureOr<void> _onLogout(AuthLogoutEvent event, AuthEmitter emit) async {
+    await _deleteUserLocalDatabaseData();
     await localSecureStore.deleteAll();
     await localSecureStore.setBoundaryRefetch(true);
     // NOTE: do NOT clear isar.appConfigurations here. Its partner — the
@@ -162,6 +164,42 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     // crash. The app config is re-fetched fresh on every app start, so we keep
     // the cached copy across logout instead of wiping it.
     emit(const AuthUnauthenticatedState());
+  }
+
+  Future<void> _deleteUserLocalDatabaseData() async {
+    await _clearSqlTables();
+    await _clearIsarUserSessionData();
+  }
+
+  Future<void> _clearSqlTables() async {
+    await sql.transaction(() async {
+      await sql.customStatement('PRAGMA foreign_keys = OFF;');
+      try {
+        final tables = await sql
+            .customSelect(
+              "SELECT name FROM sqlite_master WHERE type = 'table' "
+              "AND name NOT LIKE 'sqlite_%' "
+              "AND name != 'moor_schema' "
+              "AND LOWER(name) != 'localization';",
+            )
+            .get();
+
+        for (final row in tables) {
+          final tableName = row.data['name'] as String?;
+          if (tableName == null || tableName.isEmpty) continue;
+          final escaped = tableName.replaceAll('"', '""');
+          await sql.customStatement('DELETE FROM "$escaped";');
+        }
+      } finally {
+        await sql.customStatement('PRAGMA foreign_keys = ON;');
+      }
+    });
+  }
+
+  Future<void> _clearIsarUserSessionData() async {
+    await isar.writeTxn(() async {
+      await isar.opLogs.clear();
+    });
   }
 
   FutureOr<void> _onReset(AuthResetEvent event, AuthEmitter emit) async {
