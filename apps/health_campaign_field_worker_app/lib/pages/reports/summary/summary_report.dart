@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../../data/services/server_summary_report_service.dart';
 import '../../../models/entities/roles_type.dart';
 import '../../../router/app_router.dart';
 import '../../../utils/i18_key_constants.dart' as i18;
@@ -41,13 +42,25 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
     try {
       final userUuid = context.loggedInUserUuid;
       final projectId = context.projectId;
+      final currentCycle = context.selectedCycle;
+      final currentCycleStartDate = currentCycle?.startDate;
+      final currentCycleEndDate = currentCycle?.endDate;
+
+      bool isWithinCurrentCycle(int? epochMs) {
+        if (currentCycleStartDate == null || currentCycleEndDate == null) {
+          return true;
+        }
+        if (epochMs == null) return false;
+        return epochMs >= currentCycleStartDate &&
+            epochMs <= currentCycleEndDate;
+      }
 
       // Repositories
       final householdRepo =
-          context.read<LocalRepository<HouseholdModel, HouseholdSearchModel>>();
+          context.read<LocalRepository<HouseholdModel, HouseholdSearchModel>>()
+              as HouseholdLocalRepository;
       final taskRepo =
           context.read<LocalRepository<TaskModel, TaskSearchModel>>();
-
       final householdMemberRepo = context.read<
           LocalRepository<HouseholdMemberModel,
               HouseholdMemberSearchModel>>() as HouseholdMemberLocalRepository;
@@ -61,6 +74,10 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
           LocalRepository<ProjectFacilityModel, ProjectFacilitySearchModel>>();
       final facilityRepo =
           context.read<LocalRepository<FacilityModel, FacilitySearchModel>>();
+      final summaryReportService = context.read<ServerSummaryReportService>();
+
+      final serverReportTimestamp = await summaryReportService.timestamp();
+      final serverReportAllDates = await summaryReportService.allDates();
 
       // Determine facility ID (same logic as stock_balance_card)
       final isDistributor = context.loggedInUserRoles
@@ -100,7 +117,8 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
           : <ProductVariantModel>[];
 
       // Fetch all data
-      final households = await householdRepo.search(HouseholdSearchModel());
+      final households =
+          await householdRepo.search(HouseholdSearchModel(), userUuid);
       final tasks = await taskRepo.search(TaskSearchModel(
         createdBy: userUuid,
         projectId: projectId,
@@ -124,74 +142,50 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
       }
       final allStocks = allStocksMap.values.toList();
 
+      // Filter households by server report timestamp (if available)
+      List<HouseholdModel> filteredHouseholds = households;
+      if (serverReportTimestamp != null) {
+        filteredHouseholds = filteredHouseholds.where((e) {
+          final lastModified = e.clientAuditDetails?.lastModifiedTime ??
+              e.auditDetails?.lastModifiedTime ??
+              e.clientAuditDetails?.createdTime ??
+              e.auditDetails?.createdTime;
+          if (lastModified == null) return false;
+          return lastModified >= serverReportTimestamp;
+        }).toList();
+      }
+
       // ── Group households by date (filter by logged-in user) ──
       final hhByDate = <String, int>{};
-      for (final hh in households) {
+      for (final hh in filteredHouseholds) {
         final createdBy =
             hh.clientAuditDetails?.createdBy ?? hh.auditDetails?.createdBy;
         if (createdBy != userUuid) continue;
         final epochMs =
             hh.clientAuditDetails?.createdTime ?? hh.auditDetails?.createdTime;
+        if (!isWithinCurrentCycle(epochMs)) continue;
         if (epochMs == null) continue;
         final date = _epochToDateString(epochMs);
         hhByDate[date] = (hhByDate[date] ?? 0) + 1;
       }
 
-      final totalMembersByDate = <String, int>{};
-      for (final hh in households) {
-        final totalMembers = hh.memberCount ?? 0;
-        final epochMs =
-            hh.clientAuditDetails?.createdTime ?? hh.auditDetails?.createdTime;
-        if (epochMs == null) continue;
-        final date = _epochToDateString(epochMs);
-        totalMembersByDate[date] =
-            (totalMembersByDate[date] ?? 0) + totalMembers;
-      }
-
-      final totalITNByDate = <String, int>{};
-      for (final task in tasks) {
-        // Filter valid task status
-        if (task.status != 'ADMINISTRATION_SUCCESS' &&
-            task.status != 'VISITED') {
-          continue;
-        }
-
-        // Filter by logged-in user
-        final createdBy =
-            task.clientAuditDetails?.createdBy ?? task.auditDetails?.createdBy;
-
-        if (createdBy != userUuid) continue;
-
-        // Get created time
-        final epochMs = task.clientAuditDetails?.createdTime ??
-            task.auditDetails?.createdTime;
-
-        if (epochMs == null) continue;
-
-        // Convert to date
-        final date = _epochToDateString(epochMs);
-
-        // Get task resources
-        final resources = task.resources;
-
-        if (resources == null) continue;
-
-        // Sum quantity
-        for (final res in resources) {
-          final pvId = res.productVariantId;
-
-          if (pvId == null || pvId.isEmpty) continue;
-
-          final qty = (double.tryParse(res.quantity ?? '0') ?? 0).toInt();
-
-          totalITNByDate[date] = (totalITNByDate[date] ?? 0) + qty;
-        }
+      // Filter tasks by server report timestamp (if available)
+      List<TaskModel> filteredTasks = tasks;
+      if (serverReportTimestamp != null) {
+        filteredTasks = filteredTasks.where((e) {
+          final lastModified = e.clientAuditDetails?.lastModifiedTime ??
+              e.auditDetails?.lastModifiedTime ??
+              e.clientAuditDetails?.createdTime ??
+              e.auditDetails?.createdTime;
+          if (lastModified == null) return false;
+          return lastModified >= serverReportTimestamp;
+        }).toList();
       }
 
       // ── Group tasks by date for children treated ──
       // (filter by logged-in user AND status == 'ADMINISTRATION_SUCCESS' or 'VISITED')
       final tasksByDate = <String, Set<String>>{};
-      for (final task in tasks) {
+      for (final task in filteredTasks) {
         if (task.status != 'ADMINISTRATION_SUCCESS' && task.status != 'VISITED')
           continue;
         final createdBy =
@@ -199,6 +193,7 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
         if (createdBy != userUuid) continue;
         final epochMs = task.clientAuditDetails?.createdTime ??
             task.auditDetails?.createdTime;
+        if (!isWithinCurrentCycle(epochMs)) continue;
         if (epochMs == null) continue;
         final beneficiaryRef = task.projectBeneficiaryClientReferenceId;
         if (beneficiaryRef == null || beneficiaryRef.isEmpty) continue;
@@ -207,15 +202,29 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
         tasksByDate[date]!.add(beneficiaryRef);
       }
 
+      // Filter household members by server report timestamp (if available)
+      List<HouseholdMemberModel> filteredHouseholdMembers = householdMembers;
+      if (serverReportTimestamp != null) {
+        filteredHouseholdMembers = filteredHouseholdMembers.where((e) {
+          final lastModified = e.clientAuditDetails?.lastModifiedTime ??
+              e.auditDetails?.lastModifiedTime ??
+              e.clientAuditDetails?.createdTime ??
+              e.auditDetails?.createdTime;
+          if (lastModified == null) return false;
+          return lastModified >= serverReportTimestamp;
+        }).toList();
+      }
+
       // ── Group non-head household members by date ──
       final nonHeadMembersByDate = <String, int>{};
-      for (final member in householdMembers) {
+      for (final member in filteredHouseholdMembers) {
         if (member.isHeadOfHousehold) continue;
         final createdBy = member.clientAuditDetails?.createdBy ??
             member.auditDetails?.createdBy;
         if (createdBy != userUuid) continue;
         final epochMs = member.clientAuditDetails?.createdTime ??
             member.auditDetails?.createdTime;
+        if (!isWithinCurrentCycle(epochMs)) continue;
         if (epochMs == null) continue;
         final date = _epochToDateString(epochMs);
         nonHeadMembersByDate[date] = (nonHeadMembersByDate[date] ?? 0) + 1;
@@ -225,7 +234,7 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
       // Only count tasks with status 'ADMINISTRATION_SUCCESS' or 'VISITED'
       // Key: "date|productVariantId" -> sum of quantity
       final consumedByDateProduct = <String, double>{};
-      for (final task in tasks) {
+      for (final task in filteredTasks) {
         if (task.status != 'ADMINISTRATION_SUCCESS' && task.status != 'VISITED')
           continue;
         final createdBy =
@@ -233,6 +242,7 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
         if (createdBy != userUuid) continue;
         final epochMs = task.clientAuditDetails?.createdTime ??
             task.auditDetails?.createdTime;
+        if (!isWithinCurrentCycle(epochMs)) continue;
         if (epochMs == null) continue;
         final date = _epochToDateString(epochMs);
         final resources = task.resources;
@@ -252,6 +262,7 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
       for (final stock in allStocks) {
         final epochMs = stock.clientAuditDetails?.createdTime ??
             stock.auditDetails?.createdTime;
+        if (!isWithinCurrentCycle(epochMs)) continue;
         if (epochMs == null) continue;
         stockDates.add(_epochToDateString(epochMs));
       }
@@ -264,11 +275,10 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
 
       final allDates = <String>{
         ...hhByDate.keys,
-        ...totalMembersByDate.keys,
-        ...totalITNByDate.keys,
         ...tasksByDate.keys,
         ...stockDates,
         ...consumedDates,
+        ...serverReportAllDates,
       };
 
       // ── Build rows ──
@@ -280,11 +290,21 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
 
       final rows = <_SummaryReportRow>[];
       for (final date in sortedDates) {
-        final hhCount = hhByDate[date] ?? 0;
-        final memberCount = totalMembersByDate[date] ?? 0;
-        final distributedQty = totalITNByDate[date] ?? 0;
-        final childrenCount = tasksByDate[date]?.length ?? 0;
-        final nonHeadCount = nonHeadMembersByDate[date] ?? 0;
+        final serverReportHouseholdRegistration =
+            await summaryReportService.householdRegistration(date: date);
+        final serverReportChildrenRegistered =
+            await summaryReportService.childrenRegistered(date: date);
+        final serverReportChildrenTreated =
+            await summaryReportService.childrenTreated(date: date);
+        final serverReportStockConsumedMap =
+            await summaryReportService.stockConsumedMap(date: date);
+
+        final hhCount =
+            serverReportHouseholdRegistration + (hhByDate[date] ?? 0);
+        final childrenCount =
+            serverReportChildrenTreated + (tasksByDate[date]?.length ?? 0);
+        final nonHeadCount =
+            serverReportChildrenRegistered + (nonHeadMembersByDate[date] ?? 0);
         final percentage =
             nonHeadCount > 0 ? (childrenCount / nonHeadCount) * 100 : 0.0;
 
@@ -299,7 +319,8 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
         final cumulativeStocks = allStocks.where((stock) {
           final epochMs = stock.clientAuditDetails?.createdTime ??
               stock.auditDetails?.createdTime;
-          if (epochMs == null) return true;
+          if (!isWithinCurrentCycle(epochMs)) return false;
+          if (epochMs == null) return false;
           return epochMs <= endOfDay;
         }).toList();
 
@@ -323,7 +344,8 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
 
           // Daily consumed (for this day only)
           final key = '$date|${pv.id}';
-          final dailyConsumed = consumedByDateProduct[key] ?? 0.0;
+          final dailyConsumed = (serverReportStockConsumedMap[pv.id] ?? 0.0) +
+              (consumedByDateProduct[key] ?? 0.0);
 
           // Accumulate consumed for balance calculation
           cumulativeConsumed[pv.id] =
@@ -344,8 +366,6 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
         rows.add(_SummaryReportRow(
           date: date,
           householdsRegistered: hhCount,
-          number_of_member_in_household: memberCount,
-          number_of_itn_distributed: distributedQty.toInt(),
           childrenTreated: childrenCount,
           childrenTreatedPercent: percentage,
           stockData: stockData,
@@ -395,46 +415,44 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
       DigitTableColumn(
         header: localizations.translate(i18.summaryReport.householdsRegistered),
         cellValue: 'hhRegistered',
-        // width: 250,
       ),
       DigitTableColumn(
-        header: localizations
-            .translate(i18.summaryReport.numberOfPeopleInHouseholds),
-        cellValue: 'numberOfPeopleInHouseholds',
+        header: localizations.translate(i18.summaryReport.childrenTreated),
+        cellValue: 'childrenTreated',
       ),
       DigitTableColumn(
         header:
-            localizations.translate(i18.summaryReport.numberOfITNDistributed),
-        cellValue: 'numberOfITNDistributed',
+            localizations.translate(i18.summaryReport.childrenTreatedPercent),
+        cellValue: 'childrenTreatedPercent',
       ),
     ];
 
     // Add stock columns per product variant
-    // for (final pv in _productVariants) {
-    //   final name = localizations.translate(pv.sku ?? pv.id);
-    //   columns.addAll([
-    //     DigitTableColumn(
-    //       header:
-    //           '${localizations.translate(i18.summaryReport.stockReceived)} ($name)',
-    //       cellValue: 'received_${pv.id}',
-    //     ),
-    //     DigitTableColumn(
-    //       header:
-    //           '${localizations.translate(i18.summaryReport.stockConsumed)} ($name)',
-    //       cellValue: 'consumed_${pv.id}',
-    //     ),
-    //     DigitTableColumn(
-    //       header:
-    //           '${localizations.translate(i18.summaryReport.stockReturned)} ($name)',
-    //       cellValue: 'returned_${pv.id}',
-    //     ),
-    //     DigitTableColumn(
-    //       header:
-    //           '${localizations.translate(i18.summaryReport.stockBalance)} ($name)',
-    //       cellValue: 'balance_${pv.id}',
-    //     ),
-    //   ]);
-    // }
+    for (final pv in _productVariants) {
+      final name = localizations.translate(pv.sku ?? pv.id);
+      columns.addAll([
+        DigitTableColumn(
+          header:
+              '${localizations.translate(i18.summaryReport.stockReceived)} ($name)',
+          cellValue: 'received_${pv.id}',
+        ),
+        DigitTableColumn(
+          header:
+              '${localizations.translate(i18.summaryReport.stockConsumed)} ($name)',
+          cellValue: 'consumed_${pv.id}',
+        ),
+        DigitTableColumn(
+          header:
+              '${localizations.translate(i18.summaryReport.stockReturned)} ($name)',
+          cellValue: 'returned_${pv.id}',
+        ),
+        DigitTableColumn(
+          header:
+              '${localizations.translate(i18.summaryReport.stockBalance)} ($name)',
+          cellValue: 'balance_${pv.id}',
+        ),
+      ]);
+    }
 
     // Build rows
     final rows = _reportRows.map((row) {
@@ -448,12 +466,12 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
           cellKey: 'hhRegistered',
         ),
         DigitTableData(
-          row.number_of_member_in_household.toString(),
-          cellKey: 'number_of_member_in_household',
+          row.childrenTreated.toString(),
+          cellKey: 'childrenTreated',
         ),
         DigitTableData(
-          row.number_of_itn_distributed.toString(),
-          cellKey: 'number_of_itn_distributed',
+          '${row.childrenTreatedPercent.toStringAsFixed(1)}%',
+          cellKey: 'childrenTreatedPercent',
         ),
       ];
 
@@ -483,229 +501,87 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
       return DigitTableRow(tableRow: cells);
     }).toList();
 
-    // return Scaffold(
-    //   body: ScrollableContent(
-    //     enableFixedDigitButton: true,
-    //     header: BackNavigationHelpHeaderWidget(
-    //       handleback: () {
-    //         context.router.replaceAll([HomeRoute()]);
-    //       },
-    //     ),
-    //     footer: DigitCard(
-    //       margin: const EdgeInsets.only(top: spacer2),
-    //       children: [
-    //         DigitButton(
-    //           mainAxisSize: MainAxisSize.max,
-    //           label: localizations.translate(i18.summaryReport.backToHome),
-    //           type: DigitButtonType.primary,
-    //           size: DigitButtonSize.large,
-    //           onPressed: () {
-    //             context.router.replaceAll([HomeRoute()]);
-    //           },
-    //         ),
-    //       ],
-    //     ),
-    //     children: [
-    //       Padding(
-    //         padding: const EdgeInsets.all(spacer2),
-    //         child: Align(
-    //           alignment: Alignment.centerLeft,
-    //           child: Text(
-    //             localizations.translate(i18.summaryReport.heading),
-    //             style: textTheme.headingXl.copyWith(
-    //               color: theme.colorTheme.primary.primary2,
-    //             ),
-    //             overflow: TextOverflow.ellipsis,
-    //           ),
-    //         ),
-    //       ),
-    //       // Padding(
-    //       //   padding: const EdgeInsets.symmetric(horizontal: spacer2),
-    //       //   child: Text(
-    //       //     localizations.translate(i18.summaryReport.description),
-    //       //     style: textTheme.bodyL,
-    //       //   ),
-    //       // ),
-    //       const SizedBox(height: spacer2),
-    //       // Padding(
-    //       //   padding: const EdgeInsets.symmetric(horizontal: spacer2),
-    //       //   child: InfoCard(
-    //       //     title: localizations.translate(i18.summaryReport.infoCardTitle),
-    //       //     description: localizations
-    //       //         .translate(i18.summaryReport.infoCardDescription),
-    //       //     type: InfoType.info,
-    //       //   ),
-    //       // ),
-    //       // const SizedBox(height: spacer2),
-    //       if (_isLoading)
-    //         const Center(child: CircularProgressIndicator())
-    //       else if (_reportRows.isEmpty)
-    //         Padding(
-    //           padding: const EdgeInsets.all(spacer4),
-    //           child: Center(
-    //             child: Text(
-    //               localizations.translate(i18.common.noResultsFound),
-    //               style: textTheme.bodyL,
-    //             ),
-    //           ),
-    //         )
-    //       else
-    //         Padding(
-    //             padding: const EdgeInsets.symmetric(horizontal: spacer2),
-    //             child: SizedBox(
-    //               height: MediaQuery.of(context).size.height * 0.6,
-    //               child: DigitTable(
-    //                 enableBorder: true,
-    //                 showPagination: false,
-    //                 showSelectedState: false,
-    //                 columns: columns,
-    //                 rows: rows,
-    //                 // tableHeight: (rows.length * 50.0).clamp(100, 400),
-    //                 // tableHeight: 1000,
-    //                 tableHeight: MediaQuery.of(context).size.height * 0.6,
-    //               ),
-    //             )),
-    //       const SizedBox(height: spacer2),
-    //     ],
-    //   ),
-    // );
-
-    return ScrollableContent(
-      enableFixedDigitButton: true,
-      header: BackNavigationHelpHeaderWidget(
-        handleback: () {
-          context.router.replaceAll([HomeRoute()]);
-        },
-      ),
-      footer: DigitCard(
-        margin: const EdgeInsets.only(top: spacer2),
+    return Scaffold(
+      body: ScrollableContent(
+        enableFixedDigitButton: true,
+        header: BackNavigationHelpHeaderWidget(
+          handleback: () {
+            context.router.replaceAll([HomeRoute()]);
+          },
+        ),
+        footer: DigitCard(
+          margin: const EdgeInsets.only(top: spacer2),
+          children: [
+            DigitButton(
+              mainAxisSize: MainAxisSize.max,
+              label: localizations.translate(i18.summaryReport.backToHome),
+              type: DigitButtonType.primary,
+              size: DigitButtonSize.large,
+              onPressed: () {
+                context.router.replaceAll([HomeRoute()]);
+              },
+            ),
+          ],
+        ),
         children: [
-          DigitButton(
-            mainAxisSize: MainAxisSize.max,
-            label: localizations.translate(i18.summaryReport.backToHome),
-            type: DigitButtonType.primary,
-            size: DigitButtonSize.large,
-            onPressed: () {
-              context.router.replaceAll([HomeRoute()]);
-            },
+          Padding(
+            padding: const EdgeInsets.all(spacer2),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                localizations.translate(i18.summaryReport.heading),
+                style: textTheme.headingXl.copyWith(
+                  color: theme.colorTheme.primary.primary2,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ),
-        ],
-      ),
-      // children: [
-      //   Padding(
-      //     padding: const EdgeInsets.all(spacer2),
-      //     child: Align(
-      //       alignment: Alignment.centerLeft,
-      //       child: Text(
-      //         localizations.translate(i18.summaryReport.heading),
-      //         style: textTheme.headingXl.copyWith(
-      //           color: theme.colorTheme.primary.primary2,
-      //         ),
-      //         overflow: TextOverflow.ellipsis,
-      //       ),
-      //     ),
-      //   ),
-      //   // Padding(
-      //   //   padding: const EdgeInsets.symmetric(horizontal: spacer2),
-      //   //   child: Text(
-      //   //     localizations.translate(i18.summaryReport.description),
-      //   //     style: textTheme.bodyL,
-      //   //   ),
-      //   // ),
-      //   const SizedBox(height: spacer2),
-      //   // Padding(
-      //   //   padding: const EdgeInsets.symmetric(horizontal: spacer2),
-      //   //   child: InfoCard(
-      //   //     title: localizations.translate(i18.summaryReport.infoCardTitle),
-      //   //     description: localizations
-      //   //         .translate(i18.summaryReport.infoCardDescription),
-      //   //     type: InfoType.info,
-      //   //   ),
-      //   // ),
-      //   // const SizedBox(height: spacer2),
-      //   if (_isLoading)
-      //     const Center(child: CircularProgressIndicator())
-      //   else if (_reportRows.isEmpty)
-      //     Padding(
-      //       padding: const EdgeInsets.all(spacer4),
-      //       child: Center(
-      //         child: Text(
-      //           localizations.translate(i18.common.noResultsFound),
-      //           style: textTheme.bodyL,
-      //         ),
-      //       ),
-      //     )
-      //   else
-      //     Padding(
-      //         padding: const EdgeInsets.symmetric(horizontal: spacer2),
-      //         child: SizedBox(
-      //           height: MediaQuery.of(context).size.height * 0.6,
-      //           child: DigitTable(
-      //             enableBorder: true,
-      //             showPagination: false,
-      //             showSelectedState: false,
-      //             columns: columns,
-      //             rows: rows,
-      //             // tableHeight: (rows.length * 50.0).clamp(100, 400),
-      //             // tableHeight: 1000,
-      //             tableHeight: MediaQuery.of(context).size.height * 0.6,
-      //           ),
-      //         )),
-      //   const SizedBox(height: spacer2),
-      // ],
-      slivers: [
-        SliverToBoxAdapter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(spacer2),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    localizations.translate(i18.summaryReport.heading),
-                    style: textTheme.headingXl.copyWith(
-                      color: theme.colorTheme.primary.primary2,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: spacer2),
+            child: Text(
+              localizations.translate(i18.summaryReport.description),
+              style: textTheme.bodyL,
+            ),
+          ),
+          const SizedBox(height: spacer2),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: spacer2),
+            child: InfoCard(
+              title: localizations.translate(i18.summaryReport.infoCardTitle),
+              description: localizations
+                  .translate(i18.summaryReport.infoCardDescription),
+              type: InfoType.info,
+            ),
+          ),
+          const SizedBox(height: spacer2),
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (_reportRows.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(spacer4),
+              child: Center(
+                child: Text(
+                  localizations.translate(i18.common.noResultsFound),
+                  style: textTheme.bodyL,
                 ),
               ),
-              const SizedBox(height: spacer2),
-              if (_isLoading)
-                const Center(child: CircularProgressIndicator())
-              else if (_reportRows.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(spacer4),
-                  child: Center(
-                    child: Text(
-                      localizations.translate(i18.common.noResultsFound),
-                      style: textTheme.bodyL,
-                    ),
-                  ),
-                )
-              else
-                ClipRect(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: spacer2),
-                    child: SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.6,
-                      child: DigitTable(
-                        enableBorder: true,
-                        showPagination: false,
-                        showSelectedState: false,
-                        columns: columns,
-                        rows: rows,
-                        tableHeight: MediaQuery.of(context).size.height * 0.6,
-                      ),
-                    ),
-                  ),
-                ),
-              const SizedBox(height: spacer2),
-            ],
-          ),
-        ),
-      ],
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: spacer2),
+              child: DigitTable(
+                enableBorder: true,
+                showPagination: false,
+                showSelectedState: false,
+                columns: columns,
+                rows: rows,
+                tableHeight: 1000,
+              ),
+            ),
+          const SizedBox(height: spacer2),
+        ],
+      ),
     );
   }
 }
@@ -713,8 +589,6 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
 class _SummaryReportRow {
   final String date;
   final int householdsRegistered;
-  final int number_of_member_in_household;
-  final int number_of_itn_distributed;
   final int childrenTreated;
   final double childrenTreatedPercent;
   final Map<String, _ProductStockData> stockData;
@@ -722,8 +596,6 @@ class _SummaryReportRow {
   _SummaryReportRow({
     required this.date,
     required this.householdsRegistered,
-    required this.number_of_member_in_household,
-    required this.number_of_itn_distributed,
     required this.childrenTreated,
     required this.childrenTreatedPercent,
     this.stockData = const {},

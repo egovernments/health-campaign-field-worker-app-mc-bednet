@@ -48,6 +48,7 @@ import '../data/repositories/local/localization.dart';
 import '../data/local_store/no_sql/schema/app_configuration.dart';
 import '../data/local_store/no_sql/schema/service_registry.dart';
 import '../data/local_store/secure_store/secure_store.dart';
+import '../data/services/server_summary_report_service.dart';
 import '../models/entities/roles_type.dart';
 import '../router/app_router.dart';
 import '../sampleJsonConfigs/attendance_flows.dart';
@@ -139,6 +140,7 @@ class _HomePageState extends LocalizedState<HomePage> {
     });
     //// Function to set initial Data required for the packages to run
     setPackagesSingleton(context);
+    unawaited(_initializeServerSummaryReportService());
 
     // Register custom components for forms
     _registerCustomComponents();
@@ -148,6 +150,27 @@ class _HomePageState extends LocalizedState<HomePage> {
     if (FaceAuthFeatureFlag.enabled) {
       _checkFaceEnrollment();
     }
+  }
+
+  Future<void> _initializeServerSummaryReportService() async {
+    try {
+      final summaryReportService = context.read<ServerSummaryReportService>();
+
+      final userUuid = context.loggedInUserUuid;
+      final projectId = context.projectId;
+
+      final selectedCycle = context.selectedCycle;
+
+      if (selectedCycle == null) {
+        return;
+      }
+
+      await summaryReportService.initializeForContext(
+        userUuid: userUuid,
+        projectId: projectId,
+        currentCycle: selectedCycle,
+      );
+    } catch (_) {}
   }
 
   /// Face-auth gate: if the logged-in distributor hasn't enrolled a face (or
