@@ -25,6 +25,7 @@ import 'package:transit_post/data/repositories/local/user_action.dart';
 import 'package:transit_post/data/repositories/remote/user_action.dart';
 
 import '../../../models/app_config/app_config_model.dart' as app_configuration;
+import '../../data/local_store/app_shared_preferences.dart';
 import '../../data/local_store/no_sql/schema/app_configuration.dart';
 import '../../data/local_store/no_sql/schema/row_versions.dart';
 import '../../data/local_store/no_sql/schema/service_registry.dart';
@@ -40,6 +41,7 @@ import '../../utils/download_image.dart';
 import '../../utils/environment_config.dart';
 import '../../utils/least_level_boundary_singleton.dart';
 import '../../utils/stock_calculation_utils.dart';
+import '../../utils/stock_downsync_cursor.dart';
 import '../../utils/utils.dart';
 import '../auth/auth.dart';
 import '../push_notification/push_notification.dart';
@@ -574,7 +576,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       final allEvents = await faceAuthEventRemoteRepository!.search(
         FaceAuthEventSearchModel(projectId: projectId),
       );
-      debugPrint('[FaceAuth] projectId=$projectId → ${allEvents.length} total events');
+      debugPrint(
+          '[FaceAuth] projectId=$projectId → ${allEvents.length} total events');
 
       // Rewrite old-format events where individualId is a system user UUID.
       final normalizedEvents = allEvents.map((e) {
@@ -584,7 +587,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
 
       if (normalizedEvents.isNotEmpty) {
         await faceAuthEventLocalRepository!.bulkCreate(normalizedEvents);
-        debugPrint('[FaceAuth] stored ${normalizedEvents.length} events locally');
+        debugPrint(
+            '[FaceAuth] stored ${normalizedEvents.length} events locally');
       }
     } catch (e) {
       debugPrint('[FaceAuth] fetch for projectId=$projectId failed: $e');
@@ -1074,9 +1078,31 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         locality: localityKey,
       ));
 
-      final lastSyncedTime = existingDownSyncData.isEmpty
-          ? null
-          : existingDownSyncData.first.lastSyncedTime;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      ProjectCycle? currentCycle =
+          project.additionalDetails?.projectType?.cycles
+              ?.where(
+                (cycle) => cycle.startDate <= now && cycle.endDate >= now,
+              )
+              .firstOrNull;
+
+      int? currentCycleStartDate = currentCycle?.startDate;
+
+      currentCycleStartDate ??= project
+          .additionalDetails?.projectType?.cycles?.firstOrNull?.startDate;
+
+      // Cursor is per user + cycle so a second user on the same device
+      // still downloads their own stock from cycle start.
+      final cursorKey = StockDownsyncCursor.key(
+        project.id,
+        userObject.uuid,
+        currentCycle?.id ?? 0,
+      );
+
+      final lastSyncedTime = StockDownsyncCursor.resolveCutoff(
+        storedTime: AppSharedPreferences().getStockDownsyncTime(cursorKey),
+        cycleStartDate: currentCycleStartDate,
+      );
 
       if (existingDownSyncData.isEmpty) {
         await downSyncLocalRepository.create(DownsyncModel(
