@@ -211,7 +211,6 @@ class StockCalculationUtils {
                 stockWastage +
                 stockPartialUsed +
                 stockIssued +
-                stockLess +
                 stockDamaged +
                 stockLost)
         : stockReceived +

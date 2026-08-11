@@ -134,8 +134,6 @@ class StockBalanceExecutor extends ActionExecutor {
       final quantity = double.tryParse(stock.quantity ?? '0') ?? 0;
       final transactionType = stock.transactionType?.toUpperCase() ?? '';
       final stockEntryType = _getStockEntryType(stock);
-      final isLessOrExcess =
-          stockEntryType == 'LESS' || stockEntryType == 'EXCESS';
       final isReceiver = stock.receiverId == facilityId;
       final isSender = stock.senderId == facilityId;
 
@@ -147,11 +145,7 @@ class StockBalanceExecutor extends ActionExecutor {
 
       if (isDistContext) {
         // For distributors: received adds, everything else (issued, returned, lost, damaged, wastage) subtracts
-        if (isLessOrExcess) {
-          delta = stockEntryType == 'EXCESS'
-              ? quantity
-              : -quantity; // Less reduces; Excess increases
-        } else if (transactionType == 'RECEIVED' && isReceiver) {
+        if (transactionType == 'RECEIVED' && isReceiver) {
           delta = quantity; // Add received stock
         } else if (stockEntryType == 'RETURNED' && isReceiver) {
           delta = quantity; // Add returned stock (coming back to distributor)
@@ -162,11 +156,7 @@ class StockBalanceExecutor extends ActionExecutor {
         }
       } else {
         // For non-distributors (warehouses, facilities)
-        if (isLessOrExcess && (isSender || isReceiver)) {
-          delta = stockEntryType == 'EXCESS'
-              ? quantity
-              : -quantity; // Less reduces; Excess increases
-        } else if (isReceiver && transactionType == 'RECEIVED') {
+        if (isReceiver && transactionType == 'RECEIVED') {
           delta = quantity; // Add received stock
         } else if (isReceiver &&
             transactionType == 'DISPATCHED' &&
