@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
+import '../../data/services/server_summary_report_service.dart';
 import '../../models/entities/roles_type.dart';
 import '../../utils/extensions/extensions.dart';
 import '../../utils/stock_calculation_utils.dart';
@@ -236,6 +237,30 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
       // Calculate stock in hand for selected products
       final loggedInUserUuid = FlowBuilderSingleton().loggedInUserUuid;
       final productIds = _selectedProducts.map((p) => p.id).toList();
+      final selectedCycle = context.selectedCycle;
+
+      final summaryReportService = context.read<ServerSummaryReportService>();
+      int? serverReportTimestamp = await summaryReportService.timestamp();
+      final serverReportStockConsumedMap =
+          await summaryReportService.stockConsumedMap();
+
+      final filteredStockList = stockList.where((stock) {
+        final cycleStartDate = selectedCycle?.startDate;
+        final cycleEndDate = selectedCycle?.endDate;
+
+        if (cycleStartDate == null || cycleEndDate == null) {
+          return true;
+        }
+
+        final stockEntryDate = stock.dateOfEntryTime?.millisecondsSinceEpoch ??
+            stock.auditDetails?.lastModifiedTime ??
+            stock.clientAuditDetails?.lastModifiedTime;
+
+        if (stockEntryDate == null) return false;
+
+        return stockEntryDate >= cycleStartDate &&
+            stockEntryDate <= cycleEndDate;
+      }).toList();
 
       final taskRepo =
           context.read<LocalRepository<TaskModel, TaskSearchModel>>()
@@ -248,9 +273,18 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
       var _isDistributor = context.loggedInUserRoles
           .any((role) => role.code == RolesType.distributor.toValue());
 
+      List<TaskModel> filteredTasks = tasks;
+      if (serverReportTimestamp != null) {
+        filteredTasks = filteredTasks
+            .where((e) =>
+                e.auditDetails != null &&
+                e.auditDetails!.lastModifiedTime >= serverReportTimestamp)
+            .toList();
+      }
+
       final stockTransactionBalance =
           StockCalculationUtils.calculateStockInHandForProducts(
-        stockList: stockList,
+        stockList: filteredStockList,
         facilityId: facilityId,
         productIds: productIds,
         loggedInUserUuid: loggedInUserUuid,
@@ -260,6 +294,17 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
 
       // Merge: UserAction balances take precedence (they include delivery deductions)
       _stockInHandMap = stockTransactionBalance;
+
+      // Apply server report stock consumption adjustments
+      for (final entry in serverReportStockConsumedMap.entries) {
+        final productVariantId = entry.key;
+        final consumedQuantity = entry.value;
+
+        // Deduct the consumed quantity from the calculated balance
+        final currentBalance = _stockInHandMap[productVariantId] ?? 0.0;
+        _stockInHandMap[productVariantId] =
+            max(currentBalance - consumedQuantity, 0.0);
+      }
 
       debugPrint(
           'ProductSelectionCard: Calculated stockInHand: $_stockInHandMap');
