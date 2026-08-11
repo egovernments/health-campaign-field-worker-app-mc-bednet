@@ -81,9 +81,8 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
           await facilityRepo.search(FacilitySearchModel(id: facilityIds));
 
       // Match stock_balance_card: distributors always use userUuid
-      final effectiveFacilityId = isDistributor
-          ? userUuid
-          : (facilities.isNotEmpty ? facilities.first.id : userUuid);
+      final effectiveFacilityId =
+          (facilities.isNotEmpty ? facilities.first.id : userUuid);
 
       // Fetch product variants
       final projectResources = await projectResourceRepo
@@ -107,19 +106,57 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
       final householdMembers = await householdMemberRepo.search(
           HouseholdMemberSearchModel(), userUuid);
 
-      // Fetch stock records (received + sent for facility)
+      // Fetch stock records for facility.
+      // EXCESS/LESS can be stored with facilityId and may not always appear
+      // in receiverId/senderId filtered sets.
       final receivedStocks = await stockRepo
           .search(StockSearchModel(receiverId: effectiveFacilityId));
       final sentStocks = await stockRepo
           .search(StockSearchModel(senderId: effectiveFacilityId));
+      final facilityStocks = await stockRepo
+          .search(StockSearchModel(facilityId: effectiveFacilityId));
 
-      // Deduplicate stock records by clientReferenceId
-      final allStocksMap = <String, StockModel>{};
-      for (final stock in receivedStocks) {
-        allStocksMap[stock.clientReferenceId] = stock;
+      String getStockEntryType(StockModel stock) {
+        final fields = stock.additionalFields?.fields;
+        if (fields == null) return '';
+        for (final field in fields) {
+          if (field.key == 'stockEntryType') {
+            return field.value?.toString().toUpperCase() ?? '';
+          }
+        }
+        return '';
       }
-      for (final stock in sentStocks) {
-        allStocksMap[stock.clientReferenceId] = stock;
+
+      String getStockDedupKey(StockModel stock) {
+        if ((stock.id ?? '').isNotEmpty) return 'id:${stock.id}';
+        if (stock.clientReferenceId.isNotEmpty) {
+          return 'cr:${stock.clientReferenceId}';
+        }
+
+        final createdTime = stock.clientAuditDetails?.createdTime ??
+            stock.auditDetails?.createdTime;
+        return [
+          stock.facilityId ?? '',
+          stock.receiverId ?? '',
+          stock.senderId ?? '',
+          stock.productVariantId ?? '',
+          stock.transactionType ?? '',
+          stock.transactionReason ?? '',
+          getStockEntryType(stock),
+          stock.quantity ?? '',
+          stock.dateOfEntry?.toString() ?? '',
+          createdTime?.toString() ?? '',
+        ].join('|');
+      }
+
+      // Deduplicate stock records by stable key.
+      final allStocksMap = <String, StockModel>{};
+      for (final stock in [
+        ...receivedStocks,
+        ...sentStocks,
+        ...facilityStocks
+      ]) {
+        allStocksMap[getStockDedupKey(stock)] = stock;
       }
       final allStocks = allStocksMap.values.toList();
 
@@ -302,8 +339,18 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
           return epochMs <= endOfDay;
         }).toList();
 
+        // Daily stock entries for this specific date.
+        final dailyStocks = allStocks.where((stock) {
+          final epochMs = stock.clientAuditDetails?.createdTime ??
+              stock.auditDetails?.createdTime;
+          if (epochMs == null) return false;
+          return _epochToDateString(epochMs) == date;
+        }).toList();
+
         // Per-product stock data
         final stockData = <String, _ProductStockData>{};
+        double dailyLossTotal = 0.0;
+        double dailyExcessTotal = 0.0;
         for (final pv in productVariants) {
           // Cumulative received & returned using same logic as stock_balance_card
           final metrics = cumulativeStocks.isNotEmpty
@@ -316,9 +363,24 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
                 )
               : StockCalculationUtils.emptyMetrics;
 
+          final dailyMetrics = dailyStocks.isNotEmpty
+              ? StockCalculationUtils.calculateStockMetrics(
+                  stockList: dailyStocks,
+                  facilityId: effectiveFacilityId,
+                  productId: pv.id,
+                  loggedInUserUuid: userUuid,
+                  isDistributor: isDistributor,
+                )
+              : StockCalculationUtils.emptyMetrics;
+
           final totalReceived = metrics['stockReceived'] ?? 0.0;
           final totalReturned = metrics['stockReturned'] ?? 0.0;
           final totalWastage = metrics['stockWastage'] ?? 0.0;
+          final dailyLoss = dailyMetrics['stockLess'] ?? 0.0;
+          final dailyExcess = dailyMetrics['stockExcess'] ?? 0.0;
+
+          dailyLossTotal += dailyLoss;
+          dailyExcessTotal += dailyExcess;
 
           // Daily consumed (for this day only)
           final key = '$date|${pv.id}';
@@ -345,6 +407,8 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
           householdsRegistered: hhCount,
           number_of_member_in_household: memberCount,
           number_of_itn_distributed: distributedQty.toInt(),
+          lossCount: dailyLossTotal.toInt(),
+          excessCount: dailyExcessTotal.toInt(),
           childrenTreated: childrenCount,
           childrenTreatedPercent: percentage,
           stockData: stockData,
@@ -406,6 +470,14 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
             localizations.translate(i18.summaryReport.numberOfITNDistributed),
         cellValue: 'numberOfITNDistributed',
       ),
+      DigitTableColumn(
+        header: localizations.translate(i18.common.loss),
+        cellValue: 'lossCount',
+      ),
+      DigitTableColumn(
+        header: localizations.translate(i18.common.excess),
+        cellValue: 'excessCount',
+      ),
     ];
 
     // Add stock columns per product variant
@@ -453,6 +525,14 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
         DigitTableData(
           row.number_of_itn_distributed.toString(),
           cellKey: 'number_of_itn_distributed',
+        ),
+        DigitTableData(
+          row.lossCount.toString(),
+          cellKey: 'lossCount',
+        ),
+        DigitTableData(
+          row.excessCount.toString(),
+          cellKey: 'excessCount',
         ),
       ];
 
@@ -714,6 +794,8 @@ class _SummaryReportRow {
   final int householdsRegistered;
   final int number_of_member_in_household;
   final int number_of_itn_distributed;
+  final int lossCount;
+  final int excessCount;
   final int childrenTreated;
   final double childrenTreatedPercent;
   final Map<String, _ProductStockData> stockData;
@@ -723,6 +805,8 @@ class _SummaryReportRow {
     required this.householdsRegistered,
     required this.number_of_member_in_household,
     required this.number_of_itn_distributed,
+    required this.lossCount,
+    required this.excessCount,
     required this.childrenTreated,
     required this.childrenTreatedPercent,
     this.stockData = const {},
