@@ -197,6 +197,51 @@ class ServerSummaryReportService {
     return total;
   }
 
+  Future<int> peopleInHouseholds({
+    String? date,
+  }) async {
+    if (date != null && date.isNotEmpty) {
+      final dayData = await readActiveSummaryReportDayData(date: date);
+      return _toInt(dayData?['peopleInHouseholds']);
+    }
+
+    final allDayData = await _readAllActiveDayData();
+    var total = 0;
+    for (final dayData in allDayData.values) {
+      total += _toInt(dayData['peopleInHouseholds']);
+    }
+    return total;
+  }
+
+  Future<int> itnsDistributed({
+    String? date,
+  }) async {
+    if (date != null && date.isNotEmpty) {
+      final dayData = await readActiveSummaryReportDayData(date: date);
+      final explicit = dayData?['itnsDistributed'];
+      if (explicit != null) {
+        return _toInt(explicit);
+      }
+
+      // Backward compatibility for old cached snapshots.
+      final stockMap = _parseStockConsumedMap(dayData?['stockConsumedMap']);
+      return stockMap.values.fold<double>(0.0, (sum, v) => sum + v).round();
+    }
+
+    final allDayData = await _readAllActiveDayData();
+    var total = 0;
+    for (final dayData in allDayData.values) {
+      final explicit = dayData['itnsDistributed'];
+      if (explicit != null) {
+        total += _toInt(explicit);
+      } else {
+        final stockMap = _parseStockConsumedMap(dayData['stockConsumedMap']);
+        total += stockMap.values.fold<double>(0.0, (sum, v) => sum + v).round();
+      }
+    }
+    return total;
+  }
+
   Future<Map<String, double>> stockConsumedMap({
     String? date,
   }) async {

@@ -34,8 +34,10 @@ class ServerSummaryReportStorage {
     for (final report in reports) {
       existingData[report.date] = {
         'householdsRegistered': report.householdsRegistered,
+        'peopleInHouseholds': report.peopleInHouseholds,
         'childrenTreated': report.childrenTreated,
         'childrenRegistered': report.beneficiariesRegistered,
+        'itnsDistributed': report.itnsDistributed,
         'stockConsumedMap': report.stockConsumedMap,
       };
     }

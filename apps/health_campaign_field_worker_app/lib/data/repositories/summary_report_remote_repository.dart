@@ -47,9 +47,11 @@ class ServerSummaryReport {
   final String date;
   final String createdBy;
   final int householdsRegistered;
+  final int peopleInHouseholds;
   final int individualRegistered;
   final int beneficiariesRegistered;
   final int childrenTreated;
+  final int itnsDistributed;
 
   /// productVariantId -> quantity consumed on [date]
   final Map<String, double> stockConsumedMap;
@@ -58,9 +60,11 @@ class ServerSummaryReport {
     required this.date,
     required this.createdBy,
     required this.householdsRegistered,
+    required this.peopleInHouseholds,
     required this.individualRegistered,
     required this.beneficiariesRegistered,
     required this.childrenTreated,
+    required this.itnsDistributed,
     required this.stockConsumedMap,
   });
 
@@ -84,11 +88,13 @@ class ServerSummaryReport {
       createdBy: createdBy,
       householdsRegistered:
           (json['householdsRegistered'] as num?)?.toInt() ?? 0,
+      peopleInHouseholds: (json['peopleInHouseholds'] as num?)?.toInt() ?? 0,
       individualRegistered:
           (json['individualRegistered'] as num?)?.toInt() ?? 0,
       beneficiariesRegistered:
           (json['beneficiariesRegistered'] as num?)?.toInt() ?? 0,
       childrenTreated: (json['childrenTreated'] as num?)?.toInt() ?? 0,
+      itnsDistributed: (json['itnsDistributed'] as num?)?.toInt() ?? 0,
       stockConsumedMap: consumed,
     );
   }
