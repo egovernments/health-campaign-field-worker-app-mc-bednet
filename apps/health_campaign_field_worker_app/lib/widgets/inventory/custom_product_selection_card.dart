@@ -275,11 +275,14 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
 
       List<TaskModel> filteredTasks = tasks;
       if (serverReportTimestamp != null) {
-        filteredTasks = filteredTasks
-            .where((e) =>
-                e.auditDetails != null &&
-                e.auditDetails!.lastModifiedTime >= serverReportTimestamp)
-            .toList();
+        filteredTasks = filteredTasks.where((e) {
+          final lastModified = e.clientAuditDetails?.lastModifiedTime ??
+              e.auditDetails?.lastModifiedTime ??
+              e.clientAuditDetails?.createdTime ??
+              e.auditDetails?.createdTime;
+          if (lastModified == null) return false;
+          return lastModified >= serverReportTimestamp;
+        }).toList();
       }
 
       final stockTransactionBalance =
@@ -289,7 +292,7 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
         productIds: productIds,
         loggedInUserUuid: loggedInUserUuid,
         isDistributor: _isDistributor,
-        tasks: tasks,
+        tasks: filteredTasks,
       );
 
       // Merge: UserAction balances take precedence (they include delivery deductions)
