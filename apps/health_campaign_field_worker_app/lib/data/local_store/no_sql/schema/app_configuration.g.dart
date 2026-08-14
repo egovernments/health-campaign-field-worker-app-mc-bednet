@@ -419,14 +419,6 @@ int _appConfigurationEstimateSize(
     }
   }
   {
-    final value = object.faceAuthMdmsConfig;
-    if (value != null) {
-      bytesCount += 3 +
-          FaceAuthMdmsConfigSchema.estimateSize(
-              value, allOffsets[FaceAuthMdmsConfig]!, allOffsets);
-    }
-  }
-  {
     final list = object.facilityBoundaryRelationship;
     if (list != null) {
       bytesCount += 3 + list.length * 3;

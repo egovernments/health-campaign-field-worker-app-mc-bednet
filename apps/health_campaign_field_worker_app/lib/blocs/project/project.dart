@@ -382,7 +382,6 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     projects.removeDuplicates((element) => element.id);
 
     final selectedProject = await localSecureStore.selectedProject;
-    final allProjectTypes = await localSecureStore.getAllProjectTypes;
 
     // Cold-restart restore: rehydrate the runtime hierarchy from the persisted
     // selected project before any boundary / MDMS work runs.
@@ -525,13 +524,13 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         final configs = await isar.appConfigurations.where().findAll();
         final relationshipEntries =
             configs.firstOrNull?.facilityBoundaryRelationship
-            ?.map((e) => BoundaryRelationshipEntry(
-                  boundaryType: e.boundaryType,
-                  hierarchyType: e.hierarchyType,
-                  parentBoundaryType: e.parentBoundaryType,
-                  childBoundaryTypes: e.childBoundaryTypes,
-                ))
-            .toList();
+                ?.map((e) => BoundaryRelationshipEntry(
+                      boundaryType: e.boundaryType,
+                      hierarchyType: e.hierarchyType,
+                      parentBoundaryType: e.parentBoundaryType,
+                      childBoundaryTypes: e.childBoundaryTypes,
+                    ))
+                .toList();
 
         if (relationshipEntries != null && relationshipEntries.isNotEmpty) {
           boundaryTypes = resolveBoundaryTypesFromRelationship(
@@ -618,8 +617,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         // Any failure falls through to the single-type default below —
         // same behaviour the old MDMS path had when it couldn't find a
         // match.
-        debugPrint(
-            'boundary-derivation from search response failed: $e');
+        debugPrint('boundary-derivation from search response failed: $e');
       }
 
       boundaryTypes ??= [assignedBoundaryType];

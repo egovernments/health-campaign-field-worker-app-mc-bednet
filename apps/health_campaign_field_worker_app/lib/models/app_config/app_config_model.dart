@@ -488,8 +488,9 @@ class FaceAuthMdmsConfig {
   factory FaceAuthMdmsConfig.fromJson(Map<String, dynamic> json) {
     // MDMS v2 schema records wrap the payload under a 'data' key.
     // Fall back to the top-level map for v1-style flat responses.
-    final payload =
-        json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : json;
+    final payload = json['data'] is Map<String, dynamic>
+        ? json['data'] as Map<String, dynamic>
+        : json;
 
     return FaceAuthMdmsConfig(
       faceMatchThreshold: (payload['FACE_MATCH_THRESHOLD'] as num?)?.toDouble(),

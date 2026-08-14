@@ -1582,7 +1582,7 @@ class _AuthenticatedPageWrapperState extends State<AuthenticatedPageWrapper>
                 context.read<LocalizationBloc>().add(
                       OnUpdateLocalizationIndexEvent(
                         index: index,
-                        code: newLocale,
+                        code: e.value.toString(),
                       ),
                     );
               },
