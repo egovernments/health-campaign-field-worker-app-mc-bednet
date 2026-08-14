@@ -48,6 +48,8 @@ import '../data/repositories/local/localization.dart';
 import '../data/local_store/no_sql/schema/app_configuration.dart';
 import '../data/local_store/no_sql/schema/service_registry.dart';
 import '../data/local_store/secure_store/secure_store.dart';
+import '../data/remote_client.dart';
+import '../data/repositories/summary_report_remote_repository.dart';
 import '../data/services/server_summary_report_service.dart';
 import '../models/entities/roles_type.dart';
 import '../router/app_router.dart';
@@ -109,6 +111,38 @@ class _HomePageState extends LocalizedState<HomePage> {
   final _syncDebouncer = Debouncer(seconds: 5);
   final StreamController<double> stockDownloadProgress =
       StreamController<double>.broadcast();
+
+  Future<void> _refreshSummaryReportAfterSync() async {
+    try {
+      final project = context.selectedProject;
+      final currentCycle = context.selectedCycle;
+      final userUuid = context.loggedInUserUuid;
+
+      if (project.id.isEmpty || currentCycle == null || userUuid.isEmpty) {
+        return;
+      }
+
+      final reports = await SummaryReportRemoteRepository(
+        DioClient().dio,
+        searchPath: envConfig.variables.summaryReportApiPath,
+      ).search(
+        tenantId: envConfig.variables.tenantId,
+        startDate: currentCycle.startDate,
+        endDate: DateTime.now().millisecondsSinceEpoch,
+      );
+
+      await context.read<ServerSummaryReportService>().syncSummaryReports(
+            userUuid: userUuid,
+            projectId: project.id,
+            currentCycle: currentCycle,
+            reports: reports,
+          );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Summary report refresh after sync failed: $e');
+      }
+    }
+  }
 
   @override
   initState() {
@@ -1821,6 +1855,7 @@ class _HomePageState extends LocalizedState<HomePage> {
                       }
                     },
                     completedSync: () async {
+                      await _refreshSummaryReportAfterSync();
                       Navigator.of(context, rootNavigator: true).pop();
                       await localSecureStore.setManualSyncTrigger(true);
                       if (context.mounted) {
