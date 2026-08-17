@@ -466,26 +466,42 @@ class FirebaseConfig with _$FirebaseConfig {
       _$FirebaseConfigFromJson(json);
 }
 
-@freezed
-class FaceAuthMdmsConfig with _$FaceAuthMdmsConfig {
-  factory FaceAuthMdmsConfig({
-    @JsonKey(name: 'FACE_MATCH_THRESHOLD') double? faceMatchThreshold,
-    @JsonKey(name: 'MAX_FACE_ATTEMPTS') int? maxFaceAttempts,
-    @JsonKey(name: 'START_HOUR') int? startHour,
-    @JsonKey(name: 'END_HOUR') int? endHour,
-    @JsonKey(name: 'PROMPT_COUNT') int? promptCount,
-    @JsonKey(name: 'MIN_GAP_MINUTES') int? minGapMinutes,
-    @JsonKey(name: 'COUNTDOWN_DURATION_MINUTES') int? countdownDurationMinutes,
-  }) = _FaceAuthMdmsConfig;
+class FaceAuthMdmsConfig {
+  final double? faceMatchThreshold;
+  final int? maxFaceAttempts;
+  final int? startHour;
+  final int? endHour;
+  final int? promptCount;
+  final int? minGapMinutes;
+  final int? countdownDurationMinutes;
 
-  factory FaceAuthMdmsConfig.fromJson(Map<String, dynamic> json) =>
-      // MDMS v2 schema records wrap the payload under a 'data' key.
-      // Fall back to the top-level map for v1-style flat responses.
-      _$FaceAuthMdmsConfigFromJson(
-        json['data'] is Map<String, dynamic>
-            ? json['data'] as Map<String, dynamic>
-            : json,
-      );
+  const FaceAuthMdmsConfig({
+    this.faceMatchThreshold,
+    this.maxFaceAttempts,
+    this.startHour,
+    this.endHour,
+    this.promptCount,
+    this.minGapMinutes,
+    this.countdownDurationMinutes,
+  });
+
+  factory FaceAuthMdmsConfig.fromJson(Map<String, dynamic> json) {
+    // MDMS v2 schema records wrap the payload under a 'data' key.
+    // Fall back to the top-level map for v1-style flat responses.
+    final payload =
+        json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : json;
+
+    return FaceAuthMdmsConfig(
+      faceMatchThreshold: (payload['FACE_MATCH_THRESHOLD'] as num?)?.toDouble(),
+      maxFaceAttempts: (payload['MAX_FACE_ATTEMPTS'] as num?)?.toInt(),
+      startHour: (payload['START_HOUR'] as num?)?.toInt(),
+      endHour: (payload['END_HOUR'] as num?)?.toInt(),
+      promptCount: (payload['PROMPT_COUNT'] as num?)?.toInt(),
+      minGapMinutes: (payload['MIN_GAP_MINUTES'] as num?)?.toInt(),
+      countdownDurationMinutes:
+          (payload['COUNTDOWN_DURATION_MINUTES'] as num?)?.toInt(),
+    );
+  }
 }
 
 @freezed
