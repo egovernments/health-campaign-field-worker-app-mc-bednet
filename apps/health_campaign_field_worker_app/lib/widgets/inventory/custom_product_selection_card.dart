@@ -8,6 +8,7 @@ import 'package:digit_flow_builder/flow_builder.dart';
 import 'package:digit_flow_builder/utils/function_registry.dart';
 import 'package:digit_flow_builder/utils/interpolation.dart';
 import 'package:digit_forms_engine/blocs/forms/forms.dart';
+import 'package:digit_forms_engine/helper/validator_helper.dart';
 import 'package:digit_forms_engine/models/property_schema/property_schema.dart';
 import 'package:digit_forms_engine/widgets/base_reactive_field_wrapper.dart';
 import 'package:digit_ui_components/digit_components.dart';
@@ -481,8 +482,11 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
         ];
 
         // Create the entity-specific field schema with validation
-        updatedProperties[entityFieldName] =
-            baseFieldSchema.copyWith(validations: newValidations);
+        updatedProperties[entityFieldName] = baseFieldSchema.copyWith(
+          validations: newValidations,
+          max: maxValue,
+          maxValue: maxValue,
+        );
       }
     }
 
@@ -532,6 +536,31 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
       schema: updatedSchema,
     ));
 
+    // Keep existing form controls in sync with updated schema validators.
+    // Without this, controls can continue enforcing stale max values.
+    try {
+      final form = ReactiveForm.of(context, listen: false);
+      if (form is FormGroup) {
+        for (final entry in updatedProperties.entries) {
+          final fieldName = entry.key;
+          if (!fieldName.startsWith('quantity') ||
+              !form.controls.containsKey(fieldName)) {
+            continue;
+          }
+          final control = form.control(fieldName);
+          control.setValidators(
+            buildValidators(
+              entry.value,
+              schemaKey: widget.pageSchema,
+            ),
+          );
+          control.updateValueAndValidity();
+        }
+      }
+    } catch (_) {
+      // Ignore if controls are not mounted yet.
+    }
+
     debugPrint(
         'ProductSelectionCard: Updated quantity field validations for ${_selectedProducts.length} entities');
 
@@ -574,8 +603,11 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
         ? 0.0
         : (_stockInHandMap[selectedProduct.id] ?? 0.0);
 
+    final initialSchema = formsBloc.state.initialSchemas[widget.pageSchema];
+    final initialQuantityField =
+        initialSchema?.pages['lessExcessDetails']?.properties?['quantity'];
     final existingValidations =
-        _normalizeValidationRules(quantityField.validations);
+        _normalizeValidationRules(initialQuantityField?.validations);
     final configuredMax = existingValidations
         .firstWhere(
           (v) => v.type == 'max' || v.type == 'maxValue',
@@ -590,8 +622,23 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
         : int.tryParse(configuredMax?.toString() ?? '') ??
             (quantityField.max ?? quantityField.maxValue ?? 5);
 
+    String? currentRecordType;
+    try {
+      final form = ReactiveForm.of(context, listen: false);
+      if (form is FormGroup && form.contains('recordType')) {
+        currentRecordType = form.control('recordType').value?.toString();
+      }
+    } catch (_) {
+      // Ignore if form is not mounted yet.
+    }
+    currentRecordType ??= properties['recordType']?.value?.toString();
+
+    final normalizedType = currentRecordType?.toUpperCase();
+    final shouldApplyStockCap =
+        normalizedType == 'LOSS' || normalizedType == 'LESS';
+
     final boundedStock = max(0, stockInHand.floor());
-    final maxValue = hasSelectedProduct
+    final maxValue = shouldApplyStockCap && hasSelectedProduct
         ? min(configuredMaxInt, boundedStock)
         : configuredMaxInt;
     final isConfiguredCapApplied = maxValue == configuredMaxInt;
@@ -619,8 +666,11 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
       ),
     ];
 
-    final updatedQuantityField =
-        quantityField.copyWith(validations: newValidations);
+    final updatedQuantityField = quantityField.copyWith(
+      validations: newValidations,
+      max: configuredMaxInt,
+      maxValue: configuredMaxInt,
+    );
     final updatedProperties = Map<String, PropertySchema>.from(properties);
     updatedProperties['quantity'] = updatedQuantityField;
 
@@ -640,6 +690,14 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
       final form = ReactiveForm.of(context, listen: false);
       if (form is! FormGroup) return;
       final quantityControl = form.control('quantity');
+      quantityControl.setValidators(
+        buildValidators(
+          updatedQuantityField,
+          schemaKey: widget.pageSchema,
+        ),
+      );
+      quantityControl.updateValueAndValidity();
+
       final currentValue =
           int.tryParse(quantityControl.value?.toString() ?? '');
       if (currentValue != null && currentValue > maxValue) {
@@ -679,6 +737,14 @@ class _ProductSelectionCardState extends LocalizedState<ProductSelectionCard> {
 
         if (hasTypeSwitched) {
           _clearLessExcessQuantityForSafety();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            final formsBloc = context.read<FormsBloc>();
+            final schema = formsBloc.state.cachedSchemas[widget.pageSchema];
+            if (schema != null) {
+              _updateLessExcessQuantityValidation(formsBloc, schema);
+            }
+          });
         }
 
         _lastRecordType = currentType;
