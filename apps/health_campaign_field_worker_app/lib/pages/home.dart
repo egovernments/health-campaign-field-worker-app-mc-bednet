@@ -2864,7 +2864,7 @@ class _HomePageState extends LocalizedState<HomePage> {
                     code: LeastLevelBoundarySingleton().boundary?.first));
 
             final moduleName =
-                'hcm-inventory-${context.selectedProject.referenceID}';
+                'hcm-inventory-${context.selectedProject.referenceID},hcm-inventory';
             await triggerLocalization(module: moduleName);
             isTriggerLocalisation = false;
 
@@ -3186,7 +3186,7 @@ class _HomePageState extends LocalizedState<HomePage> {
             );
 
             final moduleName =
-                'hcm-stockreconciliation-${context.selectedProject.referenceID},hcm-inventory-${context.selectedProject.referenceID}';
+                'hcm-stockreconciliation-${context.selectedProject.referenceID},hcm-inventory,hcm-inventory-${context.selectedProject.referenceID}';
             await triggerLocalization(module: moduleName);
             isTriggerLocalisation = false;
 
@@ -3372,7 +3372,7 @@ class _HomePageState extends LocalizedState<HomePage> {
             context.router.push(CurrentBoundaryRoute(
               onBoundarySelected: (ctx) async {
                 final moduleName =
-                    'hcm-hfreferral-${context.selectedProject.referenceID},hcm-inventory-${context.selectedProject.referenceID},hcm-boundary-${envConfig.variables.hierarchyType.toLowerCase()}';
+                    'hcm-hfreferral-${context.selectedProject.referenceID},hcm-inventory,hcm-inventory-${context.selectedProject.referenceID},hcm-boundary-${envConfig.variables.hierarchyType.toLowerCase()}';
                 await triggerLocalization(module: moduleName);
                 isTriggerLocalisation = false;
 
@@ -3468,7 +3468,7 @@ class _HomePageState extends LocalizedState<HomePage> {
                     code: LeastLevelBoundarySingleton().boundary?.first));
 
             final moduleName =
-                'hcm-stockreports-${context.selectedProject.referenceID},hcm-inventory-${context.selectedProject.referenceID}';
+                'hcm-stockreports-${context.selectedProject.referenceID},hcm-inventory,hcm-inventory-${context.selectedProject.referenceID}';
             await triggerLocalization(module: moduleName);
             isTriggerLocalisation = false;
 
@@ -3800,7 +3800,7 @@ class _HomePageState extends LocalizedState<HomePage> {
       i18.home
           .beneficiaryIdLabel, // TODO: Uncomment when beneficiary downsync is implemented
       if (FaceAuthFeatureFlag.enabled) i18.home.faceRegistrationLabel,
-      i18.home.dataShare,
+      // i18.home.dataShare,
       i18.home.stockSyncDataLabel,
       i18.home.summaryReportLabel,
       i18.home.db,

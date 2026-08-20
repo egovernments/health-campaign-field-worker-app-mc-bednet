@@ -140,8 +140,7 @@ class BeneficiaryProgressBarState extends State<BeneficiaryProgressBar> {
       (element) => element.beneficiaryType == beneficiaryType.toValue(),
     );
 
-    final target = 70;
-    //  targetModel?.targetNo ?? 0.0;
+    final target = targetModel?.targetNo ?? 0.0;
 
     return DigitCard(margin: const EdgeInsets.all(spacer2), children: [
       ProgressIndicatorContainer(

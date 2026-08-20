@@ -133,6 +133,11 @@ class Variables {
     '$_minRamThresholdGbValue',
   );
 
+  static const _defaultLocale = EnvEntry(
+    'DEFAULT_LOCALE',
+    'en_BEDNET',
+  );
+
   const Variables({
     this.useFallbackValues = false,
     required DotEnv dotEnv,
@@ -225,6 +230,15 @@ class Variables {
 
     return EnvType.values.firstWhereOrNull((env) => env.name == envName) ??
         EnvType.dev;
+  }
+
+  String get defaultLocale {
+    final fallbackLocale =
+        envType == EnvType.prod ? 'en_NG' : _defaultLocale.value;
+
+    return useFallbackValues
+        ? fallbackLocale
+        : _dotEnv.get(_defaultLocale.key, fallback: fallbackLocale);
   }
 }
 

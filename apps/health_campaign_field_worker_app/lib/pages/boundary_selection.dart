@@ -5,12 +5,9 @@ import 'package:collection/collection.dart';
 import 'package:digit_data_model/data_model.dart';
 import 'package:digit_flow_builder/utils/utils.dart' show FlowBuilderSingleton;
 import 'package:digit_ui_components/digit_components.dart';
-import 'package:digit_ui_components/theme/digit_extended_theme.dart';
 import 'package:digit_ui_components/utils/component_utils.dart';
 import 'package:digit_ui_components/utils/date_utils.dart';
-import 'package:digit_ui_components/widgets/atoms/pop_up_card.dart';
 import 'package:digit_ui_components/widgets/molecules/digit_card.dart';
-import 'package:digit_ui_components/widgets/molecules/show_pop_up.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:reactive_forms/reactive_forms.dart';
@@ -53,14 +50,13 @@ class _BoundarySelectionPageState
   Map<String, TextEditingController> dropdownControllers = {};
   late StreamSubscription syncSubscription;
   var leastLevelBoundaries;
-  late final String setLocale =
-      AppSharedPreferences().getSelectedLocale ?? "en_BEDNET";
+  late final String setLocale = AppSharedPreferences().getSelectedLocale ??
+      envConfig.variables.defaultLocale;
   bool doFilter = false;
 
   @override
   void initState() {
     context.syncRefresh();
-    final setLocale = AppSharedPreferences().getSelectedLocale ?? "en_BEDNET";
     LocalizationParams().setModule('common', false);
     LocalizationParams().setCode([
       i18.common.coreCommonContinue,
@@ -148,8 +144,7 @@ class _BoundarySelectionPageState
                               state.boundaryList.map((e) => e.code!).toList();
 
                           final labelCodeList = state.selectedBoundaryMap.keys
-                              .map((key) =>
-                                  '${runtimeHierarchyType()}_$key')
+                              .map((key) => '${runtimeHierarchyType()}_$key')
                               .toList();
 
                           final combinedCodes = [
