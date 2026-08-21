@@ -91,8 +91,8 @@ class BeneficiaryProgressBarState extends State<BeneficiaryProgressBar> {
           final summaryReportService =
               context.read<ServerSummaryReportService>();
           int? serverReportTimestamp = await summaryReportService.timestamp();
-          int? serverReportChildrenTreated =
-              await summaryReportService.childrenTreated(
+          int? houseHoldRegistered =
+              await summaryReportService.householdRegistration(
             date: DateFormat('yyyy-MM-dd').format(now),
           );
 
@@ -120,8 +120,7 @@ class BeneficiaryProgressBarState extends State<BeneficiaryProgressBar> {
           if (mounted) {
             setState(() {
               if (mounted) {
-                current =
-                    serverReportChildrenTreated + groupedEntries.entries.length;
+                current = houseHoldRegistered + groupedEntries.entries.length;
               }
             });
           }
