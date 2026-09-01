@@ -9,6 +9,7 @@ import '../../blocs/auth/auth.dart';
 import '../../blocs/localization/app_localization.dart';
 import '../../router/app_router.dart';
 import '../../utils/i18_key_constants.dart' as i18;
+import '../../utils/utils.dart';
 import '../showcase/showcase_button.dart';
 
 class BackNavigationHelpHeaderWidget extends StatelessWidget {
@@ -68,7 +69,9 @@ class BackNavigationHelpHeaderWidget extends StatelessWidget {
                   Flexible(
                     child: DigitButton(
                       capitalizeLetters: false,
-                      onPressed: () {
+                      onPressed: () async {
+                        if (!await ensureOnlineOrAlert(context)) return;
+                        if (!context.mounted) return;
                         context.read<AuthBloc>().add(const AuthLogoutEvent());
                       },
                       prefixIcon: Icons.logout_outlined,

@@ -99,6 +99,25 @@ setBgRunning(bool isBgRunning) async {
   await localSecureStore.setBackgroundService(isBgRunning);
 }
 
+/// Returns true if online. If offline, shows an alert and returns false —
+/// used to block logout while offline instead of logging out locally.
+Future<bool> ensureOnlineOrAlert(BuildContext context) async {
+  final connectivityResult = await Connectivity().checkConnectivity();
+  final isOnline = connectivityResult.contains(ConnectivityResult.wifi) ||
+      connectivityResult.contains(ConnectivityResult.mobile);
+
+  if (!isOnline && context.mounted) {
+    Toast.showToast(
+      context,
+      message: AppLocalizations.of(context)
+          .translate(i18.syncDialog.noInternetConnection),
+      type: ToastType.error,
+    );
+  }
+
+  return isOnline;
+}
+
 performBackgroundService({
   BuildContext? context,
   required bool stopService,

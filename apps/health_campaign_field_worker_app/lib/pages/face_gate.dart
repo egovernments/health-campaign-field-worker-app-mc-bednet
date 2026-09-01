@@ -24,6 +24,7 @@ import '../services/face_auth_feature_flag.dart';
 import '../services/worker_registry_service.dart';
 import '../utils/environment_config.dart';
 import '../utils/extensions/extensions.dart';
+import '../utils/utils.dart';
 import '../widgets/face_auth/reverification_popup.dart';
 
 /// Face identity gate page — shown after login/boundary selection.
@@ -414,8 +415,10 @@ class _EnrollmentWrapper extends StatelessWidget {
             child: const Text('No'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(dialogContext).pop();
+              if (!await ensureOnlineOrAlert(context)) return;
+              if (!context.mounted) return;
               context.read<AuthBloc>().add(const AuthLogoutEvent());
             },
             child: const Text('Yes'),

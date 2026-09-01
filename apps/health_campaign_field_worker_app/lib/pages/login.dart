@@ -42,7 +42,7 @@ class _LoginPageState extends LocalizedState<LoginPage> {
   bool _localizationReady = false;
   static const _userId = 'userId';
   static const _password = 'password';
-  static const _debugUserId = 'USR-135829';
+  static const _debugUserId = 'USR-135830';
   static const _debugPassword = 'eGov@123';
 
   String? _pendingUserId;
@@ -312,20 +312,30 @@ class _LoginPageState extends LocalizedState<LoginPage> {
                                     (form.control(_password).value as String)
                                         .trim();
 
-                                context.read<AuthBloc>().add(
-                                      AuthLoginEvent(
-                                        userId: _pendingUserId as String,
-                                        password: _pendingPassword as String,
-                                        tenantId: envConfig.variables.tenantId,
-                                      ),
+                                final singleUserLoginEnabled = context
+                                    .read<AppInitializationBloc>()
+                                    .state
+                                    .maybeWhen(
+                                      initialized: (appConfiguration, _, __) =>
+                                          appConfiguration.singleUserLogin
+                                              ?.any((e) => e.enabled) ??
+                                          false,
+                                      orElse: () => false,
                                     );
 
-                                // if (singleUserLogin) {
-                                //   _checkOtherDeviceLogin(
-                                //       context, _pendingUserId as String);
-                                // } else {
-
-                                // }
+                                if (singleUserLoginEnabled) {
+                                  _checkOtherDeviceLogin(
+                                      context, _pendingUserId as String);
+                                } else {
+                                  context.read<AuthBloc>().add(
+                                        AuthLoginEvent(
+                                          userId: _pendingUserId as String,
+                                          password: _pendingPassword as String,
+                                          tenantId:
+                                              envConfig.variables.tenantId,
+                                        ),
+                                      );
+                                }
                               },
                               size: DigitButtonSize.large,
                               mainAxisSize: MainAxisSize.max,

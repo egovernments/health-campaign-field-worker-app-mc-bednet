@@ -1390,6 +1390,9 @@ class _AuthenticatedPageWrapperState extends State<AuthenticatedPageWrapper>
                                 );
 
                                 if (context.mounted) {
+                                  if (!await ensureOnlineOrAlert(context)) {
+                                    return;
+                                  }
                                   context.read<PushNotificationBloc>().add(
                                         PushNotificationEvent.logout(
                                           apiEndPoint: apiEndPoint,
