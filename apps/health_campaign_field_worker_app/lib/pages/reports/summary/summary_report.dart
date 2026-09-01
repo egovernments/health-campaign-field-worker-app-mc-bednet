@@ -2,9 +2,7 @@ import 'package:digit_data_model/data/repositories/package_repository/local/hous
 import 'package:digit_data_model/data_model.dart';
 import 'package:digit_ui_components/digit_components.dart';
 import 'package:digit_ui_components/theme/digit_extended_theme.dart';
-import 'package:digit_ui_components/widgets/atoms/table_cell.dart';
 import 'package:digit_ui_components/widgets/molecules/digit_card.dart';
-import 'package:digit_ui_components/widgets/molecules/digit_table.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +13,7 @@ import '../../../router/app_router.dart';
 import '../../../utils/i18_key_constants.dart' as i18;
 import '../../../utils/stock_calculation_utils.dart';
 import '../../../utils/utils.dart';
+import '../../../widgets/custom_table/custom_data_table.dart';
 import '../../../widgets/header/back_navigation_help_header.dart';
 import '../../../widgets/localized.dart';
 
@@ -349,65 +348,39 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
     final textTheme = theme.digitTextTheme(context);
 
     // Build columns: base columns + per-product stock columns
-    final columns = <DigitTableColumn>[
-      DigitTableColumn(
+    final columns = <CustomTableColumn>[
+      CustomTableColumn(
         header: localizations.translate(i18.summaryReport.dateColumn),
-        cellValue: 'date',
       ),
-      DigitTableColumn(
+      CustomTableColumn(
         header: localizations.translate(i18.summaryReport.householdsRegistered),
-        cellValue: 'hhRegistered',
       ),
-      DigitTableColumn(
+      CustomTableColumn(
         header: localizations
             .translate(i18.summaryReport.numberOfPeopleInHouseholds),
-        cellValue: 'numberOfPeopleInHouseholds',
       ),
-      DigitTableColumn(
+      CustomTableColumn(
         header:
             localizations.translate(i18.summaryReport.numberOfITNDistributed),
-        cellValue: 'numberOfITNDistributed',
       ),
-      DigitTableColumn(
+      CustomTableColumn(
         header: localizations.translate(i18.common.loss),
-        cellValue: 'lossCount',
       ),
-      DigitTableColumn(
+      CustomTableColumn(
         header: localizations.translate(i18.common.excess),
-        cellValue: 'totalExcess',
       ),
     ];
 
     // Build rows
     final rows = _reportRows.map((row) {
-      final cells = <DigitTableData>[
-        DigitTableData(
-          _formatDisplayDate(row.date),
-          cellKey: 'date',
-        ),
-        DigitTableData(
-          row.householdsRegistered.toString(),
-          cellKey: 'hhRegistered',
-        ),
-        DigitTableData(
-          row.numberOfPeopleInHouseholds.toString(),
-          cellKey: 'numberOfPeopleInHouseholds',
-        ),
-        DigitTableData(
-          row.numberOfITNDistributed.toString(),
-          cellKey: 'numberOfITNDistributed',
-        ),
-        DigitTableData(
-          row.totalLess.toStringAsFixed(0),
-          cellKey: 'totalLess',
-        ),
-        DigitTableData(
-          row.totalExcess.toStringAsFixed(0),
-          cellKey: 'totalExcess',
-        ),
-      ];
-
-      return DigitTableRow(tableRow: cells);
+      return CustomTableRow([
+        _formatDisplayDate(row.date),
+        row.householdsRegistered.toString(),
+        row.numberOfPeopleInHouseholds.toString(),
+        row.numberOfITNDistributed.toString(),
+        row.totalLess.toStringAsFixed(0),
+        row.totalExcess.toStringAsFixed(0),
+      ]);
     }).toList();
 
     return Scaffold(
@@ -462,13 +435,10 @@ class _SummaryReportPageState extends LocalizedState<SummaryReportPage> {
           else
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: spacer2),
-              child: DigitTable(
+              child: CustomDataTable(
                 enableBorder: true,
-                showPagination: false,
-                showSelectedState: false,
                 columns: columns,
                 rows: rows,
-                tableHeight: 1000,
               ),
             ),
           const SizedBox(height: spacer2),
