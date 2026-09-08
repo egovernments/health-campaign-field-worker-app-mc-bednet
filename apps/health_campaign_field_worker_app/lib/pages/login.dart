@@ -42,7 +42,7 @@ class _LoginPageState extends LocalizedState<LoginPage> {
   bool _localizationReady = false;
   static const _userId = 'userId';
   static const _password = 'password';
-  static const _debugUserId = 'USR-135830';
+  static const _debugUserId = 'USR-786752';
   static const _debugPassword = 'eGov@123';
 
   String? _pendingUserId;
@@ -123,6 +123,35 @@ class _LoginPageState extends LocalizedState<LoginPage> {
             },
             error: (message) {
               Navigator.of(context, rootNavigator: true).pop();
+
+              final isActiveSessionExists =
+                  (message ?? '').contains('ACTIVE_SESSION_EXISTS');
+
+              if (isActiveSessionExists) {
+                showCustomPopup(
+                  context: context,
+                  builder: (ctx) => Popup(
+                    title: localizations.translate(i18.login.labelText),
+                    titleIcon: Icon(
+                      Icons.error_outline,
+                      color: theme.colorTheme.alert.error,
+                    ),
+                    description:
+                        localizations.translate(i18.login.userAlreadyLoggedIn),
+                    type: PopUpType.simple,
+                    actions: [
+                      DigitButton(
+                        label: localizations.translate(i18.common.coreCommonOk),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        type: DigitButtonType.primary,
+                        size: DigitButtonSize.large,
+                      ),
+                    ],
+                  ),
+                );
+                return;
+              }
+
               Toast.showToast(
                 context,
                 message: message ??

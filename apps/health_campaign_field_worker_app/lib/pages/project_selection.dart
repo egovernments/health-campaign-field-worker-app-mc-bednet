@@ -9,11 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:isar/isar.dart';
 
-import '../blocs/auth/auth.dart';
 import '../blocs/localization/localization.dart';
 import '../blocs/project/project.dart';
 import '../data/local_store/app_shared_preferences.dart';
-import '../data/local_store/no_sql/schema/app_configuration.dart';
 import '../router/app_router.dart';
 import '../utils/environment_config.dart';
 import '../utils/i18_key_constants.dart' as i18;
@@ -34,11 +32,6 @@ class ProjectSelectionPage extends LocalizedStatefulWidget {
 }
 
 class _ProjectSelectionPageState extends LocalizedState<ProjectSelectionPage> {
-  /// [_selectedProject] is to keep track of the project the user selected.
-  /// Primary intention is to use this project during the retry mechanism of a
-  /// failing down-sync. At this point, the [ProjectState] has not persisted the
-  /// selected project yet
-  ProjectModel? _selectedProject;
   DialogRoute? syncDialogRoute;
 
   @override
@@ -206,13 +199,10 @@ class _ProjectSelectionPageState extends LocalizedState<ProjectSelectionPage> {
                               size: DigitButtonSize.large,
                               mainAxisSize: MainAxisSize.max,
                               onPressed: () async {
-                                if (!await ensureOnlineOrAlert(context)) {
-                                  return;
-                                }
-                                if (!context.mounted) return;
-                                context
-                                    .read<AuthBloc>()
-                                    .add(const AuthLogoutEvent());
+                                await performAppLogout(
+                                  context,
+                                  requireConfirmation: true,
+                                );
                               },
                             ),
                           ),
@@ -232,8 +222,6 @@ class _ProjectSelectionPageState extends LocalizedState<ProjectSelectionPage> {
                           icon: Icons.article,
                           heading: element.name,
                           onTap: () {
-                            _selectedProject = element;
-
                             context.read<ProjectBloc>().add(
                                   ProjectSelectProjectEvent(element),
                                 );
@@ -382,7 +370,6 @@ class _ProjectSelectionPageState extends LocalizedState<ProjectSelectionPage> {
           project.startDateTime!.isBefore(now) ? now : project.startDateTime!;
       DateTime endAfterTimestamp = project.endDateTime!;
       Isar isar = await Constants().isar;
-      final appConfiguration = await isar.appConfigurations.where().findAll();
 
       if (endAfterTimestamp.isAfter(now)) {
         triggerLocationTracker(

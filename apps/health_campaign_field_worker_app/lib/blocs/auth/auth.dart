@@ -4,6 +4,7 @@ import 'package:digit_data_model/data_model.dart';
 import 'package:digit_data_model/models/entities/user_action.dart';
 import 'package:digit_ui_components/utils/app_logger.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:isar/isar.dart';
@@ -14,7 +15,6 @@ import '../../data/repositories/remote/mdms.dart';
 import '../../models/auth/auth_model.dart';
 import '../../models/entities/roles_type.dart';
 import '../../models/role_actions/role_actions_model.dart';
-import '../../services/device_id_service.dart';
 import '../../utils/constants.dart';
 import '../../utils/environment_config.dart';
 
@@ -91,7 +91,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoadingState());
 
     try {
-      final deviceId = await DeviceIdService.getDeviceId();
+      final deviceId =
+          "testing-device-001"; //await DeviceIdService.getDeviceId();
       final AuthModel result = await authRepository.fetchAuthToken(
         loginModel: LoginModel(
           username: event.userId,
@@ -141,7 +142,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
     } on DioException catch (error) {
-      emit(const AuthErrorState());
+      emit(AuthErrorState(_extractLoginErrorMessage(error)));
       emit(const AuthUnauthenticatedState());
 
       AppLogger.instance.error(
@@ -161,11 +162,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   // session is left untouched so the user stays logged in.
   FutureOr<void> _onLogout(AuthLogoutEvent event, AuthEmitter emit) async {
     try {
+      final payload = await _buildLogoutPayload();
+      if (payload['access_token'] == null ||
+          (payload['access_token'] as String).isEmpty) {
+        _showLogoutFailureAlert('Unable to logout: missing access token.');
+        return;
+      }
+
       await authRepository.logOutUser(
         logoutPath: Constants.logoutUserPath,
-        body: await _buildLogoutPayload(),
+        body: payload,
       );
+    } on DioException catch (e) {
+      final message = _extractDioErrorMessage(e);
+      _showLogoutFailureAlert(message);
+      AppLogger.instance.error(
+        title: 'Logout API error',
+        message: '${e.response?.statusCode}: ${e.response?.data}',
+      );
+      return;
     } catch (e) {
+      _showLogoutFailureAlert('Logout failed. Please try again.');
       AppLogger.instance.error(
         title: 'Logout API error',
         message: '$e',
@@ -187,13 +204,85 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthUnauthenticatedState());
   }
 
+  String _extractDioErrorMessage(DioException error) {
+    final data = error.response?.data;
+
+    if (data is Map<String, dynamic>) {
+      final directMessage = data['message'];
+      if (directMessage is String && directMessage.trim().isNotEmpty) {
+        return directMessage;
+      }
+
+      final errors = data['Errors'];
+      if (errors is List && errors.isNotEmpty) {
+        final first = errors.first;
+        if (first is Map<String, dynamic>) {
+          final msg = first['message'];
+          if (msg is String && msg.trim().isNotEmpty) {
+            return msg;
+          }
+        }
+      }
+    }
+
+    final fallback = error.response?.statusMessage;
+    if (fallback != null && fallback.trim().isNotEmpty) {
+      return fallback;
+    }
+    return 'Logout failed. Please try again.';
+  }
+
+  String _extractLoginErrorMessage(DioException error) {
+    final data = error.response?.data;
+
+    if (data is Map<String, dynamic>) {
+      final errorDescription = data['error_description'];
+      if (errorDescription is String &&
+          errorDescription.contains('ACTIVE_SESSION_EXISTS')) {
+        return 'ACTIVE_SESSION_EXISTS';
+      }
+
+      final directMessage = data['message'];
+      if (directMessage is String && directMessage.trim().isNotEmpty) {
+        return directMessage;
+      }
+    }
+
+    return 'Unable to login. Please try again.';
+  }
+
+  void _showLogoutFailureAlert(String message) {
+    final messenger = scaffoldMessengerKey.currentState;
+    if (messenger == null) return;
+
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+        ),
+      );
+  }
+
   Future<Map<String, dynamic>> _buildLogoutPayload() async {
-    final deviceId = await DeviceIdService.getDeviceId();
-    final userModel = await localSecureStore.userRequestModel;
+    final accessToken = await localSecureStore.accessToken;
+    final userObject = await localSecureStore.userRequestModel;
+    final tenantIdFromUser = userObject?.tenantId;
+    final tenantId =
+        (tenantIdFromUser != null && tenantIdFromUser.trim().isNotEmpty)
+            ? tenantIdFromUser
+            : envConfig.variables.tenantId;
+
     return {
-      if (userModel?.uuid != null) 'userId': userModel!.uuid,
-      'deviceId': deviceId,
-      'tenantId': envConfig.variables.tenantId,
+      if (accessToken != null && accessToken.isNotEmpty)
+        'access_token': accessToken,
+      'tenantId': tenantId,
+      'RequestInfo': {
+        'apiId': '',
+        'authToken': accessToken ?? '',
+        'msgId': '',
+        'plainAccessRequest': {},
+      },
     };
   }
 
@@ -255,7 +344,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       AuthSwitchDeviceEventSwitchDevice event, AuthEmitter emit) async {
     try {
       emit(const AuthLoadingState());
-      final deviceId = await DeviceIdService.getDeviceId();
+      final deviceId =
+          "testing-device-001"; //await DeviceIdService.getDeviceId();
       final result = await authRepository.switchDevice(
         endpoint: event.apiEndPoint, // Use the endpoint from the event
         payload: {
@@ -329,7 +419,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       AuthCheckOtherDeviceLoginEvent event, AuthEmitter emit) async {
     emit(const AuthLoadingState());
     final deviceToken = await localSecureStore.getDeviceToken(event.username);
-    final deviceId = await DeviceIdService.getDeviceId();
+    final deviceId =
+        "testing-device-001"; //await DeviceIdService.getDeviceId();
     final payload = {
       'username': event.username,
       "tenantId": event.tenantId,
