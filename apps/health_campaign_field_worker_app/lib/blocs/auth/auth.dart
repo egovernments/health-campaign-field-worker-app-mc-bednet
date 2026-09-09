@@ -15,6 +15,7 @@ import '../../data/repositories/remote/mdms.dart';
 import '../../models/auth/auth_model.dart';
 import '../../models/entities/roles_type.dart';
 import '../../models/role_actions/role_actions_model.dart';
+import '../../services/device_id_service.dart';
 import '../../utils/constants.dart';
 import '../../utils/environment_config.dart';
 
@@ -91,8 +92,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoadingState());
 
     try {
-      final deviceId =
-          "testing-device-001"; //await DeviceIdService.getDeviceId();
+      final deviceId = await DeviceIdService.getDeviceId();
       final AuthModel result = await authRepository.fetchAuthToken(
         loginModel: LoginModel(
           username: event.userId,
@@ -344,8 +344,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       AuthSwitchDeviceEventSwitchDevice event, AuthEmitter emit) async {
     try {
       emit(const AuthLoadingState());
-      final deviceId =
-          "testing-device-001"; //await DeviceIdService.getDeviceId();
+      final deviceId = await DeviceIdService.getDeviceId();
       final result = await authRepository.switchDevice(
         endpoint: event.apiEndPoint, // Use the endpoint from the event
         payload: {
@@ -419,8 +418,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       AuthCheckOtherDeviceLoginEvent event, AuthEmitter emit) async {
     emit(const AuthLoadingState());
     final deviceToken = await localSecureStore.getDeviceToken(event.username);
-    final deviceId =
-        "testing-device-001"; //await DeviceIdService.getDeviceId();
+    final deviceId = await DeviceIdService.getDeviceId();
     final payload = {
       'username': event.username,
       "tenantId": event.tenantId,
