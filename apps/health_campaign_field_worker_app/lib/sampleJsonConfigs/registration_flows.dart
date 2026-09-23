@@ -2171,7 +2171,7 @@ final dynamic sampleFlows = {
               "validations": [
                 {
                   "type": "required",
-                  "value": false,
+                  "value": true,
                   "message": "REGISTRATION_RESOURCE_CARD_SELECTION_REQUIRED"
                 }
               ],

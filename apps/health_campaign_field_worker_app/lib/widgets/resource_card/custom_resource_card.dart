@@ -147,7 +147,7 @@ class _ResourceCardState extends LocalizedState<ResourceCard> {
 
     final pages =
         context.read<FormsBloc>().state.cachedSchemas[widget.pageSchema]?.pages;
-        // context.read<FormsBloc>().state.cachedSchemas["DELIVERY"]?.pages;
+    // context.read<FormsBloc>().state.cachedSchemas["DELIVERY"]?.pages;
 
     bool isReadOnlyFromSchema = widget.readOnly;
     String? labelFromSchema = widget.label;
@@ -225,18 +225,15 @@ class _ResourceCardState extends LocalizedState<ResourceCard> {
                     !_toastShown) {
                   _toastShown = true;
                   _validateAndShowToast(form, context);
-                  // Reset flag after delay to allow showing toast on next submission
-                  Future.delayed(const Duration(milliseconds: 500), () {
-                    if (mounted) {
-                      _toastShown = false;
-                    }
-                  });
                 }
 
-                // Reset toast flag and dismiss any active toast when field becomes valid
-                if (!field.control.invalid) {
+                // Reset toast flag when state is no longer in invalid+touched mode.
+                // This prevents repeated alerts while user stays on the same invalid state.
+                if (!field.control.invalid || !field.control.touched) {
                   _toastShown = false;
-                  ToastManager().dismissAll(showAnim: false);
+                  if (!field.control.invalid) {
+                    ToastManager().dismissAll(showAnim: false);
+                  }
                 }
 
                 return Column(
@@ -266,7 +263,6 @@ class _ResourceCardState extends LocalizedState<ResourceCard> {
                                     height: 16); // Middle spacing
                               }
                               final index = i ~/ 2;
-                              final controller = _controllers[index];
                               return ResourceBeneficiaryCard(
                                 maxQuantity: _maxQuantities[index],
                                 readOnly: isReadOnlyFromSchema,
@@ -549,8 +545,6 @@ class _ResourceCardState extends LocalizedState<ResourceCard> {
 
   getProductVariants() {
     final data = widget.stateData;
-    final projectType = context.selectedProjectType;
-    final cycles = projectType?.cycles;
     final eligible =
         data?.stateWrapper?.first?['eligibleProductVariants'] as List?;
     final productVariants = (eligible != null && eligible.isNotEmpty)
