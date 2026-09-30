@@ -138,7 +138,7 @@ final dynamic stockReconciliationFlows = {
               "order": 2,
               "value": 0,
               "format": "number",
-              "hidden": true,
+              "hidden": false,
               "tooltip": "",
               "helpText": "",
               "infoText": "",

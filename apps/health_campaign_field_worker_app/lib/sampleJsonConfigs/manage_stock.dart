@@ -641,6 +641,12 @@ final dynamic sampleInventoryFlows = {
                   "value": false,
                   "message":
                       "APPONE_MANAGESTOCK_WAREHOUSE_label_isGS1Code_message"
+                },
+                {
+                  "type": "pattern",
+                  "value":
+                      "^[^|]+\\|\\|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+                  "message": "INVALID_QR_CODE"
                 }
               ],
               "errorMessage": "",
@@ -878,6 +884,16 @@ final dynamic sampleInventoryFlows = {
                   "message": "INVENTORY_WAYBILL_NUMBER_REQUIRED_ERROR_MESSAGE"
                 },
                 {
+                  "type": "minLength",
+                  "value": 2,
+                  "message": "INVENTORY_WAYBILL_NUMBER_REQUIRED_ERROR_MESSAGE"
+                },
+                {
+                  "type": "maxLength",
+                  "value": 200,
+                  "message": "INVENTORY_WAYBILL_NUMBER_REQUIRED_ERROR_MESSAGE"
+                },
+                {
                   "type": "pattern",
                   "value": "^[a-zA-Z0-9]+\$",
                   "message": "INVENTORY_WAYBILL_NUMBER_REQUIRED_ERROR_MESSAGE"
@@ -906,6 +922,16 @@ final dynamic sampleInventoryFlows = {
                 {
                   "type": "required",
                   "value": false,
+                  "message": "INVENTORY_BATCH_NUMBER_REQUIRED_ERROR_MESSAGE"
+                },
+                {
+                  "type": "minLength",
+                  "value": 2,
+                  "message": "INVENTORY_BATCH_NUMBER_REQUIRED_ERROR_MESSAGE"
+                },
+                {
+                  "type": "maxLength",
+                  "value": 200,
                   "message": "INVENTORY_BATCH_NUMBER_REQUIRED_ERROR_MESSAGE"
                 },
                 {
@@ -968,7 +994,7 @@ final dynamic sampleInventoryFlows = {
               "order": 4,
               "value": "",
               "format": "text",
-              "hidden": false,
+              "hidden": true,
               "tooltip": "",
               "helpText": "",
               "infoText": "",
@@ -1012,7 +1038,7 @@ final dynamic sampleInventoryFlows = {
               "order": 4,
               "value": "",
               "format": "text",
-              "hidden": false,
+              "hidden": true,
               "tooltip": "",
               "helpText": "",
               "infoText": "",
@@ -1620,6 +1646,12 @@ final dynamic sampleInventoryFlows = {
                   "value": false,
                   "message":
                       "APPONE_MANAGESTOCK_WAREHOUSE_label_isGS1Code_message"
+                },
+                {
+                  "type": "pattern",
+                  "value":
+                      "^[^|]+\\|\\|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+                  "message": "INVALID_QR_CODE"
                 }
               ],
               "errorMessage": "",
