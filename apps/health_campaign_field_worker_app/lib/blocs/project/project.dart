@@ -1341,7 +1341,12 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         includeOnlyUpdatedByOthers: true,
       );
 
-      if (totalCount <= 0) return;
+      if (totalCount <= 0) {
+        // Even when there are no new stock transactions, refresh stock
+        // balance UserAction records so balance is available after login.
+        await downSyncStockBalances(project);
+        return;
+      }
 
       const batchSize = 50;
       int offset = 0;
