@@ -85,6 +85,17 @@ extension ScannerValidationListExt on List<ScannerValidation>? {
     return this?.firstWhereOrNull((v) => v.type == 'pattern')?.message;
   }
 
+  /// Whether manual entry is allowed in scanner UI.
+  /// Defaults to true when not configured.
+  bool get allowManualEntry {
+    final validation =
+        this?.firstWhereOrNull((v) => v.type == 'allowManualEntry');
+    final value = validation?.value;
+    if (value is bool) return value;
+    if (value is String) return value.toLowerCase() == 'true';
+    return true;
+  }
+
   /// Whether single value mode is enabled (scan limit is 1)
   bool get isSingleValue => scanLimit == 1;
 }

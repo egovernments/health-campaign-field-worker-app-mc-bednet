@@ -198,6 +198,7 @@ class Constants {
       FacilityLocalRepository(sql, FacilityOpLogManager(isar)),
       ProjectLocalRepository(sql, ProjectOpLogManager(isar)),
       ProjectStaffLocalRepository(sql, ProjectStaffOpLogManager(isar)),
+      DHDistributorLocalRepository(sql, DHDistributorOpLogManager(isar)),
       IndividualLocalRepository(sql, IndividualOpLogManager(isar)),
       ProjectFacilityLocalRepository(sql, ProjectFacilityOpLogManager(isar)),
       ServiceDefinitionLocalRepository(

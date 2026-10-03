@@ -138,6 +138,31 @@ class ProjectStaffOpLogManager extends OpLogManager<ProjectStaffModel> {
       entity.nonRecoverableError;
 }
 
+class DHDistributorOpLogManager extends OpLogManager<DHDistributorModel> {
+  DHDistributorOpLogManager(super.isar);
+
+  @override
+  DHDistributorModel applyServerGeneratedIdToEntity(
+    DHDistributorModel entity,
+    String serverGeneratedId,
+    int rowVersion,
+  ) =>
+      entity.copyWith(id: serverGeneratedId, rowVersion: rowVersion);
+
+  @override
+  String getClientReferenceId(DHDistributorModel entity) => entity.uuid;
+
+  @override
+  String? getServerGeneratedId(DHDistributorModel entity) => entity.id;
+
+  @override
+  int? getRowVersion(DHDistributorModel entity) => entity.rowVersion;
+
+  @override
+  bool? getNonRecoverableError(DHDistributorModel entity) =>
+      entity.nonRecoverableError;
+}
+
 class ProjectOpLogManager extends OpLogManager<ProjectModel> {
   ProjectOpLogManager(super.isar);
 

@@ -1,4 +1,5 @@
 import 'package:digit_crud_bloc/bloc/crud_bloc.dart';
+import 'package:digit_data_model/data_model.dart';
 import 'package:digit_data_model/utils/utils.dart';
 import 'package:digit_flow_builder/utils/scanner_comparison_utils.dart';
 import 'package:digit_flow_builder/widgets/localized.dart';
@@ -294,6 +295,105 @@ class _FormScreenWrapper extends LocalizedStatefulWidget {
 }
 
 class _FormScreenWrapperState extends LocalizedState<_FormScreenWrapper> {
+  bool _isDhScopeResolved = false;
+  bool _isDhScopedUser = false;
+  Future<void>? _dhScopeFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _dhScopeFuture = _resolveDhScope();
+  }
+
+  bool _isDistributorScannerField(String fieldName) {
+    final baseFieldName = fieldName.replaceAll(RegExp(r'_item_\d+$'), '');
+    return baseFieldName == 'teamCode' || baseFieldName == 'deliveryTeam';
+  }
+
+  Future<void> _resolveDhScope() async {
+    if (_isDhScopeResolved) return;
+
+    final roles =
+        FlowBuilderSingleton().userRoles ?? const <Map<String, dynamic>>[];
+    final roleCodes = roles.map((role) => role['code']?.toString());
+
+    final projectId = FlowBuilderSingleton().selectedProject?.id;
+    if (projectId == null || projectId.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _isDhScopeResolved = true;
+        _isDhScopedUser = false;
+      });
+      return;
+    }
+
+    try {
+      final projectFacilityRepo =
+          context.repository<ProjectFacilityModel, ProjectFacilitySearchModel>(
+        context,
+      );
+      final facilities = await projectFacilityRepo.search(
+        ProjectFacilitySearchModel(projectId: [projectId]),
+      );
+
+      _isDhScopedUser = UserScopeUtils.isDhScopedUser(
+        roleCodes: roleCodes,
+        projectFacilities: facilities,
+      );
+    } catch (_) {
+      _isDhScopedUser = false;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isDhScopeResolved = true;
+    });
+  }
+
+  String _extractDistributorUuid(String scannedValue) {
+    final trimmed = scannedValue.trim();
+    if (trimmed.contains('||')) {
+      return trimmed.split('||').last.trim();
+    }
+    return trimmed;
+  }
+
+  Future<bool> _isInvalidDhDistributorScan(
+    BuildContext context,
+    String fieldName,
+    String scannedValue,
+  ) async {
+    if (!_isDistributorScannerField(fieldName)) {
+      return false;
+    }
+
+    if (!_isDhScopeResolved) {
+      _dhScopeFuture ??= _resolveDhScope();
+      await _dhScopeFuture;
+    }
+
+    if (!_isDhScopedUser) {
+      return false;
+    }
+
+    final distributorUuid = _extractDistributorUuid(scannedValue);
+    if (distributorUuid.isEmpty) return true;
+
+    try {
+      final repository =
+          context.repository<DHDistributorModel, DHDistributorSearchModel>(
+        context,
+      );
+      final matches = await repository.search(
+        DHDistributorSearchModel(uuid: distributorUuid),
+      );
+      return matches.isEmpty;
+    } catch (_) {
+      // Fail-safe for security validation in DH -> MDT issue flow.
+      return true;
+    }
+  }
+
   String? _extractStateCode({
     String? tenantId,
     String? materializedPath,
@@ -395,14 +495,15 @@ class _FormScreenWrapperState extends LocalizedState<_FormScreenWrapper> {
                 : (boundary?.code ?? '');
 
             return ScannerComparisonProvider(
-              duplicateCheckFn: (fieldName, scannedValue, formValues) {
+              duplicateCheckFn: (fieldName, scannedValue, formValues) async {
                 // Read the latest cached schema at call time (not build time)
                 // to ensure cross-page field values are up to date.
                 final latestSchema = context
                     .read<FormsBloc>()
                     .state
                     .cachedSchemas[widget.schemaKey];
-                return ScannerComparisonUtils.executeDuplicateCheck(
+                final isDuplicate =
+                    await ScannerComparisonUtils.executeDuplicateCheck(
                   latestSchema ?? schemaObject,
                   widget.compositeKey,
                   fieldName,
@@ -410,10 +511,27 @@ class _FormScreenWrapperState extends LocalizedState<_FormScreenWrapper> {
                   formValues,
                   mergedNavParams,
                 );
+
+                if (isDuplicate) {
+                  return true;
+                }
+
+                return _isInvalidDhDistributorScan(
+                  context,
+                  fieldName,
+                  scannedValue,
+                );
               },
-              duplicateErrorMessage: (fieldName) =>
-                  ScannerComparisonUtils.getDuplicateErrorMessage(
-                      schemaObject, fieldName),
+              duplicateErrorMessage: (fieldName) {
+                if (_isDistributorScannerField(fieldName) && _isDhScopedUser) {
+                  return 'INVALID_QR_CODE';
+                }
+
+                return ScannerComparisonUtils.getDuplicateErrorMessage(
+                  schemaObject,
+                  fieldName,
+                );
+              },
               child: FormsRenderPage(
                 pageName: pageName,
                 navigationParams: mergedNavParams,
@@ -467,8 +585,6 @@ class _FormScreenWrapperState extends LocalizedState<_FormScreenWrapper> {
 
     // For each component, create a PageStateAccessor for this page
     for (final componentKey in registry.getRegisteredKeys()) {
-      final stateAccessor = PageStateAccessor(screenKey);
-
       final component = registry.buildComponent(
         componentKey,
         context,

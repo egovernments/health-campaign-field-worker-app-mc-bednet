@@ -107,6 +107,9 @@ class DigitScannerPage extends LocalizedStatefulWidget {
   /// Gets the pattern validation message from validations
   String? get patternMessage => validations?.patternMessage;
 
+  /// Gets whether manual scanner entry is allowed.
+  bool get allowManualEntry => validations?.allowManualEntry ?? true;
+
   @override
   State<DigitScannerPage> createState() => DigitScannerPageState();
 }
@@ -131,10 +134,8 @@ class DigitScannerPageState extends LocalizedState<DigitScannerPage>
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   bool _isPermissionDialogShowing = false;
   bool _waitingForPermissionFromSettings = false;
-  static const _manualGtinFormKey = 'gtinCode';
   static const _manualCodeFormKey = 'manualCode';
   static const _manualSerialNoFormKey = 'serialNoCode';
-  static const _manualExpiryDateFormKey = 'expiryDate';
 
   /// Safely parses DateTime from form control value
   /// Handles String, DateTime, int (milliseconds), and null values
@@ -1196,6 +1197,10 @@ class DigitScannerPageState extends LocalizedState<DigitScannerPage>
   }
 
   overlayForManualEntry(ThemeData theme, DigitTextTheme textTheme) {
+    if (!widget.allowManualEntry) {
+      return const SizedBox.shrink();
+    }
+
     return Align(
       alignment: Alignment.center,
       widthFactor: 2,
@@ -1392,8 +1397,7 @@ class DigitScannerPageState extends LocalizedState<DigitScannerPage>
                                       SizedBox(
                                         width: 110,
                                         child: Text(
-                                          localizations
-                                              .translate(
+                                          localizations.translate(
                                               i18.scanner.serialNumber),
                                           style: textTheme.bodyS.copyWith(
                                             color:

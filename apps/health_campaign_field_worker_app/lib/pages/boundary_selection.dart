@@ -19,6 +19,7 @@ import '../blocs/localization/localization.dart';
 import '../blocs/projects_beneficiary_downsync/project_beneficiaries_downsync.dart';
 import '../data/local_store/app_shared_preferences.dart';
 import '../data/local_store/no_sql/schema/app_configuration.dart';
+import '../data/services/dh_distributor_sync_service.dart';
 import '../models/entities/roles_type.dart';
 import '../router/app_router.dart';
 import '../utils/environment_config.dart';
@@ -53,6 +54,53 @@ class _BoundarySelectionPageState
   late final String setLocale = AppSharedPreferences().getSelectedLocale ??
       envConfig.variables.defaultLocale;
   bool doFilter = false;
+
+  Future<void> _syncDhDistributorsIfRequired(
+    BoundaryState boundaryState,
+    BoundaryModel? selectedBoundary,
+  ) async {
+    final selectedProject = context.selectedProject;
+    if (selectedProject.id.isEmpty) return;
+
+    final projectFacilities = await context
+        .repository<ProjectFacilityModel, ProjectFacilitySearchModel>()
+        .search(ProjectFacilitySearchModel(projectId: [selectedProject.id]));
+
+    final isDhScopedUser = UserScopeUtils.isDhScopedUser(
+      roleCodes: context.loggedInUserRoles.map((role) => role.code),
+      projectFacilities: projectFacilities,
+    );
+    if (!isDhScopedUser) return;
+
+    final selectedDhCode =
+        boundaryState.selectedLastLevelBoundaries.lastOrNull?.code ??
+            selectedBoundary?.code;
+    if (selectedDhCode == null || selectedDhCode.isEmpty) return;
+
+    try {
+      final baseRepository = context.read<
+          LocalRepository<DHDistributorModel, DHDistributorSearchModel>>();
+      if (baseRepository is! DHDistributorLocalRepository) return;
+
+      final cachedDistributors = await baseRepository.search(
+        DHDistributorSearchModel(dhCode: selectedDhCode),
+      );
+      if (cachedDistributors.isNotEmpty) {
+        debugPrint(
+          'boundary_selection: skipping dh distributor sync, cache exists for $selectedDhCode',
+        );
+        return;
+      }
+
+      final service = DHDistributorSyncService();
+      await service.syncDistributorsForDhUser(
+        repository: baseRepository,
+        selectedDhCode: selectedDhCode,
+      );
+    } catch (e) {
+      debugPrint('boundary_selection: dh distributor sync skipped: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -625,6 +673,12 @@ class _BoundarySelectionPageState
                                                     .add(
                                                       const BoundarySubmitEvent(),
                                                     );
+
+                                                await _syncDhDistributorsIfRequired(
+                                                  state,
+                                                  selectedBoundary?.value,
+                                                );
+
                                                 bool isOnline =
                                                     await getIsConnected();
 

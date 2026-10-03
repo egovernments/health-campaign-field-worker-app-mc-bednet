@@ -35,6 +35,7 @@ export 'data/repositories/local/base/project_resource_base.dart';
 export 'data/repositories/local/base/project_staff_base.dart';
 export 'data/repositories/local/base/user_base.dart';
 export 'data/repositories/local/boundary.dart';
+export 'data/repositories/local/dh_distributor.dart';
 export 'data/repositories/local/facility.dart';
 export 'data/repositories/local/individual.dart';
 export 'data/repositories/local/product_variant.dart';
@@ -61,6 +62,7 @@ export 'models/entities/beneficiary_type.dart';
 export 'models/entities/blood_group.dart';
 export 'models/entities/boundary.dart';
 export 'models/entities/document.dart';
+export 'models/entities/dh_distributor.dart';
 export 'models/entities/facility.dart';
 export 'models/entities/gender.dart';
 export 'models/entities/household.dart';
@@ -258,6 +260,7 @@ enum DataModelType {
   projectProductVariant,
   projectStaff,
   projectResource,
+  dhDistributor,
   projectType,
   stock,
   stockReconciliation,

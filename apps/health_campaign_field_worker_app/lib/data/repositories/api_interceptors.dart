@@ -13,6 +13,7 @@ class AuthTokenInterceptor extends Interceptor {
   final LocalSecureStore localSecureStore;
 
   static const _skipRequestInfoKey = 'skipRequestInfo';
+  static const _requestMsgIdKey = 'requestMsgId';
 
   AuthTokenInterceptor({
     LocalSecureStore? localSecureStore,
@@ -28,6 +29,10 @@ class AuthTokenInterceptor extends Interceptor {
       return super.onRequest(options, handler);
     }
 
+    final requestMsgId = options.extra[_requestMsgIdKey] is String
+        ? (options.extra[_requestMsgIdKey] as String).trim()
+        : null;
+
     final authToken = await localSecureStore.accessToken;
     final userInfo = await localSecureStore.userRequestModel;
     if (options.data is Map) {
@@ -40,6 +45,9 @@ class AuthTokenInterceptor extends Interceptor {
                 action: options.path.split('/').last,
                 did: RequestInfoData.did,
                 key: "1",
+            msgId: (requestMsgId != null && requestMsgId.isNotEmpty)
+              ? requestMsgId
+              : null,
                 authToken: authToken,
                 userInfo: userInfo,
                 tenantId: envConfig.variables.tenantId)

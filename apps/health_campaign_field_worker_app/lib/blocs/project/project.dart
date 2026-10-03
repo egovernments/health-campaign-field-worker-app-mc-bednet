@@ -1265,14 +1265,14 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         return facilityLevel == null || facilityLevel == 'current';
       }).toList();
 
-      final projectResources = await projectResourceLocalRepository.search(
-        ProjectResourceSearchModel(projectId: [project.id]),
-      );
-      final productVariantIds = projectResources
-          .map((pr) => pr.resource.productVariantId)
-          .whereType<String>()
-          .toSet()
-          .toList();
+      // final projectResources = await projectResourceLocalRepository.search(
+      //   ProjectResourceSearchModel(projectId: [project.id]),
+      // );
+      // final productVariantIds = projectResources
+      //     .map((pr) => pr.resource.productVariantId)
+      //     .whereType<String>()
+      //     .toSet()
+      //     .toList();
 
       List<String> receiverIds = [];
       if (userRoles.contains(RolesType.healthFacilitySupervisor.toValue())) {

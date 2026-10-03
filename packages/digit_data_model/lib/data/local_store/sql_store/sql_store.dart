@@ -130,23 +130,17 @@ enum DatabaseMigrationResult {
   FaceAuthEvent
 ])
 class LocalSqlDataStore extends _$LocalSqlDataStore {
-  /// The encryption key for the database.
-  /// If null, the database will not be encrypted.
-  static String? _encryptionKey;
-
   /// The constructor for `LocalSqlDataStore`.
   /// It calls the superclass constructor with `_openConnection()` as the argument.
   ///
   /// [encryptionKey] - Optional encryption key for SQLCipher encryption.
   /// If provided, the database will be encrypted using AES-256.
   LocalSqlDataStore({String? encryptionKey})
-      : super(_openConnection(encryptionKey: encryptionKey)) {
-    _encryptionKey = encryptionKey;
-  }
+      : super(_openConnection(encryptionKey: encryptionKey));
 
   /// The `schemaVersion` getter returns the schema version of the database.
   @override
-  int get schemaVersion => 12; // Increment schema version
+  int get schemaVersion => 13; // Increment schema version
 
   Future<void> _createTaskSearchIndexes() async {
     await customStatement('''
@@ -168,6 +162,29 @@ class LocalSqlDataStore extends _$LocalSqlDataStore {
         onCreate: (migrator) async {
           await migrator.createAll();
           await _createTaskSearchIndexes();
+          await customStatement('''
+            CREATE TABLE IF NOT EXISTS dh_distributor (
+              id TEXT NOT NULL,
+              uuid TEXT NOT NULL PRIMARY KEY,
+              user_name TEXT NOT NULL,
+              name TEXT NOT NULL,
+              dh_code TEXT NOT NULL,
+              dh_name TEXT NOT NULL,
+              audit_created_by TEXT,
+              non_recoverable_error BOOLEAN DEFAULT 0,
+              audit_created_time INTEGER,
+              client_created_time INTEGER,
+              client_modified_by TEXT,
+              client_created_by TEXT,
+              client_modified_time INTEGER,
+              audit_modified_by TEXT,
+              audit_modified_time INTEGER,
+              tenant_id TEXT,
+              is_deleted BOOLEAN DEFAULT 0,
+              row_version INTEGER,
+              additional_fields TEXT
+            );
+          ''');
         },
         onUpgrade: (migrator, from, to) async {
           if (from < 5) {
@@ -376,6 +393,38 @@ class LocalSqlDataStore extends _$LocalSqlDataStore {
             } catch (e) {
               if (kDebugMode) {
                 print("Failed to create faceAuthEvent table");
+              }
+            }
+          }
+
+          if (from < 13) {
+            try {
+              await customStatement('''
+                CREATE TABLE IF NOT EXISTS dh_distributor (
+                  id TEXT NOT NULL,
+                  uuid TEXT NOT NULL PRIMARY KEY,
+                  user_name TEXT NOT NULL,
+                  name TEXT NOT NULL,
+                  dh_code TEXT NOT NULL,
+                  dh_name TEXT NOT NULL,
+                  audit_created_by TEXT,
+                  non_recoverable_error BOOLEAN DEFAULT 0,
+                  audit_created_time INTEGER,
+                  client_created_time INTEGER,
+                  client_modified_by TEXT,
+                  client_created_by TEXT,
+                  client_modified_time INTEGER,
+                  audit_modified_by TEXT,
+                  audit_modified_time INTEGER,
+                  tenant_id TEXT,
+                  is_deleted BOOLEAN DEFAULT 0,
+                  row_version INTEGER,
+                  additional_fields TEXT
+                );
+              ''');
+            } catch (e) {
+              if (kDebugMode) {
+                print("Failed to create dh_distributor table");
               }
             }
           }

@@ -9,6 +9,7 @@ import 'package:encrypt/encrypt.dart';
 import 'package:uuid/uuid.dart';
 
 import '../data/local_store/no_sql/schema/entity_mapper_listener.dart';
+import '../models/entities/project_facility.dart';
 
 /// This function takes an iterable of boolean expressions and builds an AND expression from them.
 /// If the iterable is empty, it returns a constant true expression.
@@ -188,5 +189,43 @@ class DataMapEncryptor {
 
     // Decode UTF-8 and parse JSON
     return jsonDecode(utf8.decode(decompressedBytes));
+  }
+}
+
+class UserScopeUtils {
+  static bool isDistributorRoleCode(String? roleCode) {
+    final normalized = roleCode?.trim().toUpperCase() ?? '';
+    return normalized == 'DISTRIBUTOR' || normalized == 'COMMUNITY_DISTRIBUTOR';
+  }
+
+  static bool isDistributor(Iterable<String?> roleCodes) {
+    return roleCodes.any(isDistributorRoleCode);
+  }
+
+  static bool hasChildFacility(Iterable<ProjectFacilityModel> facilities) {
+    return facilities.any((facility) {
+      final facilityLevel = facility.additionalFields?.fields
+          .where((field) => field.key == 'facilityLevel')
+          .firstOrNull
+          ?.value
+          ?.trim()
+          .toLowerCase();
+
+      return facilityLevel == 'child';
+    });
+  }
+
+  /// DH rule:
+  /// 1. User is not distributor/community distributor
+  /// 2. Assigned facilities do not include child level
+  static bool isDhScopedUser({
+    required Iterable<String?> roleCodes,
+    required Iterable<ProjectFacilityModel> projectFacilities,
+  }) {
+    if (isDistributor(roleCodes)) {
+      return false;
+    }
+
+    return !hasChildFacility(projectFacilities);
   }
 }

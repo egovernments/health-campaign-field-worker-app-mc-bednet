@@ -182,6 +182,13 @@ class NetworkManagerProviderWrapper extends StatelessWidget {
         ),
       ),
       RepositoryProvider<
+          LocalRepository<DHDistributorModel, DHDistributorSearchModel>>(
+        create: (_) => DHDistributorLocalRepository(
+          sql,
+          DHDistributorOpLogManager(isar),
+        ),
+      ),
+      RepositoryProvider<
           LocalRepository<ProjectFacilityModel, ProjectFacilitySearchModel>>(
         create: (_) => ProjectFacilityLocalRepository(
           sql,
