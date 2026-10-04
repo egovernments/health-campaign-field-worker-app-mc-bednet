@@ -22,7 +22,7 @@ class AuthRepository {
       loginPath,
       data: {
         ...loginModel.toJson(),
-        // 'clientType': 'mobile',
+        'clientType': 'mobile',
       },
       options: Options(
         headers: headers,

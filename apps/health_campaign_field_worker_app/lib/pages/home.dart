@@ -3806,13 +3806,16 @@ class _HomePageState extends LocalizedState<HomePage> {
       i18.home.db,
     ];
 
+    final actionDisplayNames =
+        state.actionsWrapper.actions.map((e) => e.displayName).toSet();
+    final isPreProdDbVisible = envConfig.variables.envType == EnvType.dev ||
+        envConfig.variables.envType == EnvType.qa ||
+        envConfig.variables.envType == EnvType.uat;
+
     final List<String> filteredLabels = homeItemsLabel
         .where((element) =>
-            state.actionsWrapper.actions
-                .map((e) => e.displayName)
-                .toList()
-                .contains(element) ||
-            element == i18.home.db)
+            actionDisplayNames.contains(element) ||
+            (element == i18.home.db && isPreProdDbVisible))
         .toList();
 
     final showcaseKeys = filteredLabels

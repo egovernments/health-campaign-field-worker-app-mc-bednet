@@ -98,43 +98,10 @@ class DHDistributorLocalRepository
           )
           .get();
 
-      return rows.map((row) {
-        final map = row.data;
-        final createdBy = map['audit_created_by'] as String?;
-        final createdTime = map['audit_created_time'] as int?;
-
-        return DHDistributorModel(
-          id: map['id'] as String,
-          uuid: map['uuid'] as String,
-          userName: map['user_name'] as String,
-          name: map['name'] as String,
-          dhCode: map['dh_code'] as String,
-          dhName: map['dh_name'] as String,
-          tenantId: map['tenant_id'] as String?,
-          isDeleted: map['is_deleted'] as bool?,
-          rowVersion: map['row_version'] as int?,
-          nonRecoverableError: map['non_recoverable_error'] as bool?,
-          additionalFields:
-              _parseAdditionalFields(map['additional_fields'] as String?),
-          auditDetails: createdTime == null || createdBy == null
-              ? null
-              : AuditDetails(
-                  createdTime: createdTime,
-                  createdBy: createdBy,
-                  lastModifiedBy: map['audit_modified_by'] as String?,
-                  lastModifiedTime: map['audit_modified_time'] as int?,
-                ),
-          clientAuditDetails: map['client_created_by'] == null ||
-                  map['client_created_time'] == null
-              ? null
-              : ClientAuditDetails(
-                  createdBy: map['client_created_by'] as String,
-                  createdTime: map['client_created_time'] as int,
-                  lastModifiedBy: map['client_modified_by'] as String?,
-                  lastModifiedTime: map['client_modified_time'] as int?,
-                ),
-        );
-      }).toList();
+      return rows
+          .map((row) => _mapRowToDistributor(row.data))
+          .whereType<DHDistributorModel>()
+          .toList();
     });
   }
 
@@ -164,14 +131,103 @@ class DHDistributorLocalRepository
     });
   }
 
-  DHDistributorAdditionalFields? _parseAdditionalFields(String? jsonStr) {
-    if (jsonStr == null || jsonStr.isEmpty) return null;
+  DHDistributorModel? _mapRowToDistributor(Map<String, dynamic> map) {
+    final id = _asNullableString(map['id']);
+    final uuid = _asNullableString(map['uuid']);
+    final userName = _asNullableString(map['user_name']);
+    final name = _asNullableString(map['name']);
+    final dhCode = _asNullableString(map['dh_code']);
+    final dhName = _asNullableString(map['dh_name']);
+
+    // Skip malformed rows instead of throwing on required field casts.
+    if (id == null ||
+        uuid == null ||
+        userName == null ||
+        name == null ||
+        dhCode == null ||
+        dhName == null) {
+      return null;
+    }
+
+    final createdBy = _asNullableString(map['audit_created_by']);
+    final createdTime = _asNullableInt(map['audit_created_time']);
+    final clientCreatedBy = _asNullableString(map['client_created_by']);
+    final clientCreatedTime = _asNullableInt(map['client_created_time']);
+
+    return DHDistributorModel(
+      id: id,
+      uuid: uuid,
+      userName: userName,
+      name: name,
+      dhCode: dhCode,
+      dhName: dhName,
+      tenantId: _asNullableString(map['tenant_id']),
+      isDeleted: _asNullableBool(map['is_deleted']),
+      rowVersion: _asNullableInt(map['row_version']),
+      nonRecoverableError: _asNullableBool(map['non_recoverable_error']),
+      additionalFields: _parseAdditionalFields(map['additional_fields']),
+      auditDetails: createdTime == null || createdBy == null
+          ? null
+          : AuditDetails(
+              createdTime: createdTime,
+              createdBy: createdBy,
+              lastModifiedBy: _asNullableString(map['audit_modified_by']),
+              lastModifiedTime: _asNullableInt(map['audit_modified_time']),
+            ),
+      clientAuditDetails: clientCreatedBy == null || clientCreatedTime == null
+          ? null
+          : ClientAuditDetails(
+              createdBy: clientCreatedBy,
+              createdTime: clientCreatedTime,
+              lastModifiedBy: _asNullableString(map['client_modified_by']),
+              lastModifiedTime: _asNullableInt(map['client_modified_time']),
+            ),
+    );
+  }
+
+  DHDistributorAdditionalFields? _parseAdditionalFields(dynamic value) {
+    if (value == null) return null;
+
+    if (value is Map<String, dynamic>) {
+      return DHDistributorAdditionalFieldsMapper.fromMap(value);
+    }
+
+    final jsonStr = value.toString().trim();
+    if (jsonStr.isEmpty) return null;
+
     try {
       final map = jsonDecode(jsonStr);
       if (map is Map<String, dynamic>) {
         return DHDistributorAdditionalFieldsMapper.fromMap(map);
       }
     } catch (_) {}
+    return null;
+  }
+
+  String? _asNullableString(dynamic value) {
+    if (value == null) return null;
+    final text = value.toString().trim();
+    return text.isEmpty ? null : text;
+  }
+
+  int? _asNullableInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim());
+    return null;
+  }
+
+  bool? _asNullableBool(dynamic value) {
+    if (value == null) return null;
+
+    if (value is bool) return value;
+    if (value is int) return value != 0;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      if (normalized == 'true' || normalized == '1') return true;
+      if (normalized == 'false' || normalized == '0') return false;
+    }
     return null;
   }
 

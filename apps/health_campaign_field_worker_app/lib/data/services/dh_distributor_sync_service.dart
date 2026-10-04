@@ -110,7 +110,7 @@ class DHDistributorSyncService {
     final payload = {
       'SearchCriteria': {
         'tenantId': envConfig.variables.tenantId,
-        'campaignName': "Testoctober1st",
+        'campaignNumber': campaignName,
       },
       'Pagination': {
         'limit': limit,

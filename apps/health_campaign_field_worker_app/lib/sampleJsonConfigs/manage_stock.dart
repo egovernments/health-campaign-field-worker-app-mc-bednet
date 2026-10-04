@@ -642,6 +642,8 @@ final dynamic sampleInventoryFlows = {
                   "message":
                       "APPONE_MANAGESTOCK_WAREHOUSE_label_isGS1Code_message"
                 },
+                {"type": "allowManualEntry", "value": false},
+                {"type": "skipDhDistributorValidation", "value": false},
                 {
                   "type": "pattern",
                   "value":
@@ -775,6 +777,20 @@ final dynamic sampleInventoryFlows = {
                   "value": true,
                   "message":
                       "APPONE_MANAGESTOCK_WAREHOUSE_label_facilityFromWhich_mandatory_message"
+                },
+                {
+                  "type": "isGS1Code",
+                  "value": false,
+                  "message":
+                      "APPONE_MANAGESTOCK_WAREHOUSE_label_isGS1Code_message"
+                },
+                {"type": "allowManualEntry", "value": false},
+                {"type": "skipDhDistributorValidation", "value": false},
+                {
+                  "type": "pattern",
+                  "value":
+                      "^[^|]+\\|\\|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+                  "message": "INVALID_QR_CODE"
                 }
               ],
               "errorMessage": "",
@@ -1647,6 +1663,8 @@ final dynamic sampleInventoryFlows = {
                   "message":
                       "APPONE_MANAGESTOCK_WAREHOUSE_label_isGS1Code_message"
                 },
+                {"type": "allowManualEntry", "value": false},
+                {"type": "skipDhDistributorValidation", "value": false},
                 {
                   "type": "pattern",
                   "value":
@@ -1805,6 +1823,20 @@ final dynamic sampleInventoryFlows = {
                   "value": true,
                   "message":
                       "APPONE_MANAGESTOCK_WAREHOUSE_label_facilityFromWhich_mandatory_message"
+                },
+                {
+                  "type": "isGS1Code",
+                  "value": false,
+                  "message":
+                      "APPONE_MANAGESTOCK_WAREHOUSE_label_isGS1Code_message"
+                },
+                {"type": "allowManualEntry", "value": false},
+                {"type": "skipDhDistributorValidation", "value": false},
+                {
+                  "type": "pattern",
+                  "value":
+                      "^[^|]+\\|\\|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+                  "message": "INVALID_QR_CODE"
                 }
               ],
               "errorMessage": "",

@@ -388,7 +388,8 @@ class _FormScreenWrapperState extends LocalizedState<_FormScreenWrapper> {
         DHDistributorSearchModel(uuid: distributorUuid),
       );
       return matches.isEmpty;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Error occurred while validating DH distributor scan: $e');
       // Fail-safe for security validation in DH -> MDT issue flow.
       return true;
     }
@@ -524,7 +525,9 @@ class _FormScreenWrapperState extends LocalizedState<_FormScreenWrapper> {
               },
               duplicateErrorMessage: (fieldName) {
                 if (_isDistributorScannerField(fieldName) && _isDhScopedUser) {
-                  return 'INVALID_QR_CODE';
+                  final localization = LocalizationContext.maybeOf(context);
+                  return localization?.translate('INVALID_QR_CODE') ??
+                      'INVALID_QR_CODE';
                 }
 
                 return ScannerComparisonUtils.getDuplicateErrorMessage(
