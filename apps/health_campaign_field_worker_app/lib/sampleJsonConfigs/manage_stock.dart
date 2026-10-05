@@ -1664,7 +1664,6 @@ final dynamic sampleInventoryFlows = {
                       "APPONE_MANAGESTOCK_WAREHOUSE_label_isGS1Code_message"
                 },
                 {"type": "allowManualEntry", "value": false},
-                {"type": "skipDhDistributorValidation", "value": false},
                 {
                   "type": "pattern",
                   "value":
@@ -1830,14 +1829,7 @@ final dynamic sampleInventoryFlows = {
                   "message":
                       "APPONE_MANAGESTOCK_WAREHOUSE_label_isGS1Code_message"
                 },
-                {"type": "allowManualEntry", "value": false},
-                {"type": "skipDhDistributorValidation", "value": false},
-                {
-                  "type": "pattern",
-                  "value":
-                      "^[^|]+\\|\\|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
-                  "message": "INVALID_QR_CODE"
-                }
+                {"type": "allowManualEntry", "value": false}
               ],
               "errorMessage": "",
               "isMultiSelect": false,

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:digit_data_model/models/entities/user_action.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../models/auth/auth_model.dart';
 
@@ -22,7 +23,9 @@ class AuthRepository {
       loginPath,
       data: {
         ...loginModel.toJson(),
-        'clientType': 'mobile',
+        if (!kDebugMode)
+          'clientType':
+              'mobile', // disable this for debug mode so we can debug without already login issue
       },
       options: Options(
         headers: headers,
