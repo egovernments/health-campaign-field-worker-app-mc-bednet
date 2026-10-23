@@ -1682,7 +1682,13 @@ final dynamic sampleFlows = {
         }
       ],
       "initActions": [
-        {"actionType": "LOAD_UNIQUE_ID_POOL"}
+        {"actionType": "LOAD_UNIQUE_ID_POOL"},
+        {
+          "actionType": "CUSTOM_DATA",
+          "properties": {
+            "widgetData": {"registrationBeneficiaryIdValidationEnabled": true}
+          }
+        }
       ],
       "name": "searchBeneficiary",
       "order": 1,
@@ -1713,6 +1719,8 @@ final dynamic sampleFlows = {
                   "label":
                       "REGISTRATION_SEARCH_BENEFICIARY_SKIP_CONTINUE_LABEL",
                   "format": "button",
+                  "visible":
+                      "{{registrationBeneficiaryIdValidationEnabled}}==false",
                   "onAction": [
                     {
                       "actionType": "CLOSE_POPUP",
@@ -1780,6 +1788,99 @@ final dynamic sampleFlows = {
           "format": "button",
           "fieldName": "registerNewBeneficiary",
           "onAction": [
+            {
+              "actions": [
+                {
+                  "actionType": "OPEN_POPUP",
+                  "properties": {
+                    "popupConfig": {
+                      "body": [],
+                      "type": "alert",
+                      "title":
+                          "REGISTRATION_SEARCH_BENEFICIARY_MIN_BENEFICIARY_ID_LEFT_TITLE",
+                      "description":
+                          "REGISTRATION_SEARCH_BENEFICIARY_MIN_BENEFICIARY_ID_LEFT_DESCRIPTION",
+                      "footerActions": [
+                        {
+                          "type": "template",
+                          "label":
+                              "REGISTRATION_SEARCH_BENEFICIARY_SKIP_CONTINUE_LABEL",
+                          "format": "button",
+                          "visible":
+                              "{{registrationBeneficiaryIdValidationEnabled}}==false",
+                          "onAction": [
+                            {
+                              "actionType": "CLOSE_POPUP",
+                              "properties": {
+                                "parentScreenKey": "searchBeneficiary"
+                              }
+                            },
+                            {
+                              "actionType": "NAVIGATION",
+                              "properties": {
+                                "data": [
+                                  {
+                                    "key": "nameOfIndividual",
+                                    "value": "{{searchBar}}"
+                                  },
+                                  {
+                                    "key": "UNIQUE_BENEFICIARY_ID",
+                                    "value": "{{latestBeneficiaryId}}"
+                                  },
+                                  {
+                                    "key": "uniqueBeneficiaryIdModel",
+                                    "value": "{{latestBeneficiaryIdModel}}"
+                                  }
+                                ],
+                                "name": "HOUSEHOLD",
+                                "type": "FORM"
+                              }
+                            }
+                          ],
+                          "fieldName": "skip",
+                          "properties": {
+                            "size": "large",
+                            "type": "secondary",
+                            "mainAxisSize": "max"
+                          }
+                        },
+                        {
+                          "type": "template",
+                          "label":
+                              "REGISTRATION_SEARCH_BENEFICIARY_DOWNLOAD_ID",
+                          "format": "button",
+                          "onAction": [
+                            {
+                              "actionType": "CLOSE_POPUP",
+                              "properties": {
+                                "parentScreenKey": "searchBeneficiary"
+                              }
+                            },
+                            {
+                              "actionType":
+                                  "NAVIGATE_TO_BENEFICIARY_ID_DOWN_SYNC",
+                              "properties": {}
+                            }
+                          ],
+                          "fieldName": "downloadID",
+                          "properties": {
+                            "size": "large",
+                            "type": "primary",
+                            "mainAxisSize": "max"
+                          }
+                        }
+                      ],
+                      "showCloseButton": true,
+                      "barrierDismissible": true
+                    }
+                  }
+                }
+              ],
+              "condition": {
+                "expression":
+                    "{{registrationBeneficiaryIdValidationEnabled}}!=false && {{fn:hasMinimumBeneficiaryId(singleton.beneficiaryIdMinCount, uniqueIdPoolCount)}}==false"
+              }
+            },
             {
               "actions": [
                 {

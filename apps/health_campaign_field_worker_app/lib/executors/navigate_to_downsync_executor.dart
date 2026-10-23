@@ -15,10 +15,7 @@ class NavigateToBeneficiaryIdDownSyncExecutor extends ActionExecutor {
     BuildContext context,
     Map<String, dynamic> contextData,
   ) async {
-
     final router = context.router;
-
-    router.popUntil((route) => route.settings.name == 'HomeRoute');
 
     await router.push(BeneficiaryIdDownSyncRoute());
 

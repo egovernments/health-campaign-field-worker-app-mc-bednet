@@ -165,13 +165,15 @@ class SignatureCaptureWidget extends ResolvedFlowWidget {
               : footerActions
                   .whereType<Map<String, dynamic>>()
                   .map((actionJson) {
-                  // Footer actions use original context which has LocalizationContext in its tree
-                  return FlowWidgetFactory.build(
-                    actionJson,
-                    context,
-                    onAction,
-                  ) as DigitButton;
-                }).toList(),
+                    // Footer actions use original context which has LocalizationContext in its tree
+                    return FlowWidgetFactory.build(
+                      actionJson,
+                      context,
+                      onAction,
+                    );
+                  })
+                  .whereType<DigitButton>()
+                  .toList(),
           inlineActions: true,
         );
       },

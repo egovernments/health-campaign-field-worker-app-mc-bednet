@@ -13,7 +13,61 @@ final dynamic sampleCloseHouseholdFlows = {
       "project": "LLIN-mz",
       "version": 1,
       "initActions": [
-        {"actionType": "LOAD_UNIQUE_ID_POOL"}
+        {"actionType": "LOAD_UNIQUE_ID_POOL"},
+        {
+          "actionType": "CUSTOM_DATA",
+          "properties": {
+            "widgetData": {"closeHouseholdBeneficiaryIdValidationEnabled": true}
+          }
+        },
+        {
+          "condition": {
+            "expression":
+                "{{closeHouseholdBeneficiaryIdValidationEnabled}}!=false && {{fn:hasMinimumBeneficiaryId(singleton.beneficiaryIdMinCount, uniqueIdPoolCount)}}==false"
+          },
+          "actions": [
+            {
+              "actionType": "OPEN_POPUP",
+              "properties": {
+                "popupConfig": {
+                  "body": [],
+                  "type": "alert",
+                  "title":
+                      "REGISTRATION_SEARCH_BENEFICIARY_MIN_BENEFICIARY_ID_LEFT_TITLE",
+                  "description":
+                      "REGISTRATION_SEARCH_BENEFICIARY_MIN_BENEFICIARY_ID_LEFT_DESCRIPTION",
+                  "footerActions": [
+                    {
+                      "type": "template",
+                      "label": "REGISTRATION_SEARCH_BENEFICIARY_DOWNLOAD_ID",
+                      "format": "button",
+                      "onAction": [
+                        {
+                          "actionType": "CLOSE_POPUP",
+                          "properties": {
+                            "parentScreenKey": "closeHouseholdRegistration"
+                          }
+                        },
+                        {
+                          "actionType": "NAVIGATE_TO_BENEFICIARY_ID_DOWN_SYNC",
+                          "properties": {}
+                        }
+                      ],
+                      "fieldName": "downloadIDFromCloseHousehold",
+                      "properties": {
+                        "size": "large",
+                        "type": "primary",
+                        "mainAxisSize": "max"
+                      }
+                    }
+                  ],
+                  "showCloseButton": true,
+                  "barrierDismissible": true
+                }
+              }
+            }
+          ]
+        }
       ],
       "disabled": false,
       "isSelected": true,
