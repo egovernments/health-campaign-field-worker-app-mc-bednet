@@ -3810,7 +3810,8 @@ class _HomePageState extends LocalizedState<HomePage> {
         state.actionsWrapper.actions.map((e) => e.displayName).toSet();
     final isPreProdDbVisible = envConfig.variables.envType == EnvType.dev ||
         envConfig.variables.envType == EnvType.qa ||
-        envConfig.variables.envType == EnvType.uat;
+        envConfig.variables.envType == EnvType.uat ||
+        (envConfig.variables.envType == EnvType.prod && kDebugMode);
 
     final List<String> filteredLabels = homeItemsLabel
         .where((element) =>
