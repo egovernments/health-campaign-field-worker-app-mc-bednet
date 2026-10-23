@@ -737,7 +737,7 @@ class _PermissionsScreenState extends LocalizedState<PermissionsPage> {
     final onActions = onActionRaw is List
         ? onActionRaw
         : (onActionRaw is Map<String, dynamic> ? [onActionRaw] : const []);
-    final translatedLabel = localizations.translate(label);
+    final translatedLabel = _resolveButtonLabel(label, onActions);
 
     final fixedWidthValue = properties['fixedWidth'];
     final fixedWidth = fixedWidthValue is num
@@ -857,6 +857,33 @@ class _PermissionsScreenState extends LocalizedState<PermissionsPage> {
         ),
       ),
     );
+  }
+
+  String _resolveButtonLabel(String label, List<dynamic> onActions) {
+    final translated = localizations.translate(label);
+    if (translated != label) return translated;
+
+    // Some remote configs use suffixed variants (e.g. GRANT_PERMISSION_B)
+    // that may not exist in localization resources.
+    if (label.endsWith('_B')) {
+      final withoutSuffix = label.substring(0, label.length - 2);
+      final translatedWithoutSuffix = localizations.translate(withoutSuffix);
+      if (translatedWithoutSuffix != withoutSuffix) {
+        return translatedWithoutSuffix;
+      }
+    }
+
+    final isPermissionGrantButton = onActions.any(
+      (action) =>
+          action is Map<String, dynamic> &&
+          action['actionType'] == 'REQUEST_PERMISSION',
+    );
+
+    if (isPermissionGrantButton) {
+      return localizations.translate(i18.common.grantPermission);
+    }
+
+    return translated;
   }
 
   String _formatButtonLabelForTwoLines(
