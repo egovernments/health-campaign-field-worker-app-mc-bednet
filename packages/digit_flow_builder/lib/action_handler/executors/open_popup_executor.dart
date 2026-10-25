@@ -5,6 +5,7 @@ import 'package:digit_ui_components/widgets/atoms/pop_up_card.dart';
 import 'package:digit_ui_components/widgets/molecules/show_pop_up.dart';
 import 'package:flutter/material.dart';
 
+import '../../blocs/app_localization.dart';
 import '../../utils/interpolation.dart';
 import '../../widget_registry.dart';
 import '../../widgets/flow_widget_interface.dart';
@@ -95,7 +96,9 @@ class OpenPopupExecutor extends ActionExecutor {
     required String? parentCompositeKey,
     required CrudItemContext? crudCtx,
   }) async {
-    final localization = LocalizationContext.maybeOf(context);
+    final localization = LocalizationContext.maybeOf(context) ??
+        Localizations.of<FlowBuilderLocalization>(
+            context, FlowBuilderLocalization);
     final title = popupConfig['title'] as String? ?? 'Popup';
     final description = popupConfig['description'] as String?;
     final titleIconName = popupConfig['titleIcon'] as String?;

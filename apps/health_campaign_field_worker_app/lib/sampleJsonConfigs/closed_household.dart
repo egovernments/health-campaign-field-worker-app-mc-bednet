@@ -288,6 +288,176 @@ final dynamic sampleCloseHouseholdFlows = {
           "autoEnable": null,
           "onAction": [
             {
+              "actions": [
+                {
+                  "actionType": "OPEN_POPUP",
+                  "properties": {
+                    "popupConfig": {
+                      "body": [],
+                      "type": "alert",
+                      "title":
+                          "REGISTRATION_SEARCH_BENEFICIARY_MIN_BENEFICIARY_ID_LEFT_TITLE",
+                      "description":
+                          "REGISTRATION_SEARCH_BENEFICIARY_MIN_BENEFICIARY_ID_LEFT_DESCRIPTION",
+                      "footerActions": [
+                        {
+                          "type": "template",
+                          "label":
+                              "REGISTRATION_SEARCH_BENEFICIARY_DOWNLOAD_ID",
+                          "format": "button",
+                          "onAction": [
+                            {
+                              "actionType": "CLOSE_POPUP",
+                              "properties": {
+                                "parentScreenKey": "closeHouseholdRegistration"
+                              }
+                            },
+                            {
+                              "actionType":
+                                  "NAVIGATE_TO_BENEFICIARY_ID_DOWN_SYNC",
+                              "properties": {}
+                            }
+                          ],
+                          "fieldName": "downloadIDFromCloseHouseholdSubmit",
+                          "properties": {
+                            "size": "large",
+                            "type": "primary",
+                            "mainAxisSize": "max"
+                          }
+                        }
+                      ],
+                      "showCloseButton": true,
+                      "barrierDismissible": true
+                    }
+                  }
+                }
+              ],
+              "condition": {
+                "expression":
+                    "{{closeHouseholdBeneficiaryIdValidationEnabled}}!=false && {{fn:hasMinimumBeneficiaryId(singleton.beneficiaryIdMinCount, uniqueIdPoolCount)}}==false"
+              }
+            },
+            {
+              "actions": [
+                {
+                  "actionType": "FETCH_TRANSFORMER_CONFIG",
+                  "properties": {
+                    "configName": "closeHouseholdRegistration",
+                    "data": [
+                      {
+                        "key": "latestBeneficiaryId",
+                        "value": "{{navigation.UNIQUE_BENEFICIARY_ID}}"
+                      }
+                    ],
+                    "onError": [
+                      {
+                        "actionType": "SHOW_TOAST",
+                        "properties": {"message": "Failed to fetch config."}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "actionType": "CREATE_EVENT",
+                  "properties": {
+                    "onError": [
+                      {
+                        "actionType": "SHOW_TOAST",
+                        "properties": {"message": "Failed to create stock."}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "actionType": "NAVIGATION",
+                  "properties": {
+                    "type": "TEMPLATE",
+                    "name": "closedHouseholdSummary",
+                    "onError": [
+                      {
+                        "actionType": "SHOW_TOAST",
+                        "properties": {"message": "Navigation failed."}
+                      }
+                    ],
+                    "data": [
+                      {
+                        "key": "HouseholdClientReferenceId",
+                        "value": "{{entities.HouseholdModel.clientReferenceId}}"
+                      },
+                      {
+                        "key": "UNIQUE_BENEFICIARY_ID",
+                        "value": "{{navigation.UNIQUE_BENEFICIARY_ID}}"
+                      },
+                      {
+                        "key": "uniqueBeneficiaryIdModel",
+                        "value": "{{latestBeneficiaryIdModel}}"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "condition": {
+                "expression":
+                    "{{closeHouseholdBeneficiaryIdValidationEnabled}}==false || {{fn:hasMinimumBeneficiaryId(singleton.beneficiaryIdMinCount, uniqueIdPoolCount)}}==true"
+              }
+            }
+          ]
+        }
+      ],
+      "overView": "CLOSEHOUSEHOLD_SUMMARY_HEADING",
+      "summary": false,
+      "onAction": [
+        {
+          "actions": [
+            {
+              "actionType": "OPEN_POPUP",
+              "properties": {
+                "popupConfig": {
+                  "body": [],
+                  "type": "alert",
+                  "title":
+                      "REGISTRATION_SEARCH_BENEFICIARY_MIN_BENEFICIARY_ID_LEFT_TITLE",
+                  "description":
+                      "REGISTRATION_SEARCH_BENEFICIARY_MIN_BENEFICIARY_ID_LEFT_DESCRIPTION",
+                  "footerActions": [
+                    {
+                      "type": "template",
+                      "label": "REGISTRATION_SEARCH_BENEFICIARY_DOWNLOAD_ID",
+                      "format": "button",
+                      "onAction": [
+                        {
+                          "actionType": "CLOSE_POPUP",
+                          "properties": {
+                            "parentScreenKey": "closeHouseholdRegistration"
+                          }
+                        },
+                        {
+                          "actionType": "NAVIGATE_TO_BENEFICIARY_ID_DOWN_SYNC",
+                          "properties": {}
+                        }
+                      ],
+                      "fieldName": "downloadIDFromCloseHouseholdSubmit",
+                      "properties": {
+                        "size": "large",
+                        "type": "primary",
+                        "mainAxisSize": "max"
+                      }
+                    }
+                  ],
+                  "showCloseButton": true,
+                  "barrierDismissible": true
+                }
+              }
+            }
+          ],
+          "condition": {
+            "expression":
+                "{{closeHouseholdBeneficiaryIdValidationEnabled}}!=false && {{fn:hasMinimumBeneficiaryId(singleton.beneficiaryIdMinCount, uniqueIdPoolCount)}}==false"
+          }
+        },
+        {
+          "actions": [
+            {
               "actionType": "FETCH_TRANSFORMER_CONFIG",
               "properties": {
                 "configName": "closeHouseholdRegistration",
@@ -333,81 +503,25 @@ final dynamic sampleCloseHouseholdFlows = {
                     "value": "{{entities.HouseholdModel.clientReferenceId}}"
                   },
                   {
-                    "key": "UNIQUE_BENEFICIARY_ID",
-                    "value": "{{navigation.UNIQUE_BENEFICIARY_ID}}"
+                    "key": "test0012",
+                    "value":
+                        "{{entities.ProjectBeneficiaryModel.clientReferenceId}}"
                   },
                   {
-                    "key": "uniqueBeneficiaryIdModel",
-                    "value": "{{latestBeneficiaryIdModel}}"
+                    "key": "UNIQUE_BENEFICIARY_ID",
+                    "value": "{{navigation.UNIQUE_BENEFICIARY_ID}}"
                   }
+                  // {
+                  //   "key": "latestBeneficiaryId",
+                  //   "value": "{{closeHouseholdDetails.identifiers[1]}}"
+                  // },
                 ]
               }
             }
-          ]
-        }
-      ],
-      "overView": "CLOSEHOUSEHOLD_SUMMARY_HEADING",
-      "summary": false,
-      "onAction": [
-        {
-          "actionType": "FETCH_TRANSFORMER_CONFIG",
-          "properties": {
-            "configName": "closeHouseholdRegistration",
-            "data": [
-              {
-                "key": "latestBeneficiaryId",
-                "value": "{{navigation.UNIQUE_BENEFICIARY_ID}}"
-              }
-            ],
-            "onError": [
-              {
-                "actionType": "SHOW_TOAST",
-                "properties": {"message": "Failed to fetch config."}
-              }
-            ]
-          }
-        },
-        {
-          "actionType": "CREATE_EVENT",
-          "properties": {
-            "onError": [
-              {
-                "actionType": "SHOW_TOAST",
-                "properties": {"message": "Failed to create stock."}
-              }
-            ]
-          }
-        },
-        {
-          "actionType": "NAVIGATION",
-          "properties": {
-            "type": "TEMPLATE",
-            "name": "closedHouseholdSummary",
-            "onError": [
-              {
-                "actionType": "SHOW_TOAST",
-                "properties": {"message": "Navigation failed."}
-              }
-            ],
-            "data": [
-              {
-                "key": "HouseholdClientReferenceId",
-                "value": "{{entities.HouseholdModel.clientReferenceId}}"
-              },
-              {
-                "key": "test0012",
-                "value":
-                    "{{entities.ProjectBeneficiaryModel.clientReferenceId}}"
-              },
-              {
-                "key": "UNIQUE_BENEFICIARY_ID",
-                "value": "{{navigation.UNIQUE_BENEFICIARY_ID}}"
-              }
-              // {
-              //   "key": "latestBeneficiaryId",
-              //   "value": "{{closeHouseholdDetails.identifiers[1]}}"
-              // },
-            ]
+          ],
+          "condition": {
+            "expression":
+                "{{closeHouseholdBeneficiaryIdValidationEnabled}}==false || {{fn:hasMinimumBeneficiaryId(singleton.beneficiaryIdMinCount, uniqueIdPoolCount)}}==true"
           }
         }
       ]

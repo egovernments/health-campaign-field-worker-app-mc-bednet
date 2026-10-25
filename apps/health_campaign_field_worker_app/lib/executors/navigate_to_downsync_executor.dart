@@ -17,7 +17,10 @@ class NavigateToBeneficiaryIdDownSyncExecutor extends ActionExecutor {
   ) async {
     final router = context.router;
 
-    await router.push(BeneficiaryIdDownSyncRoute());
+    await router.replaceAll([
+      HomeRoute(),
+      BeneficiaryIdDownSyncRoute(),
+    ]);
 
     return contextData;
   }
