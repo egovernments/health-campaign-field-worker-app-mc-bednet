@@ -137,10 +137,9 @@ class _StockBalanceCardState extends LocalizedState<StockBalanceCard> {
         _isDistributor = isDistributor;
       });
 
-      // Distributors always use their UUID; others use facility ID
-      // Stock records (including Less/Excess) are keyed by facility IDs.
-      // Using distributor UUID here can miss those records in balance refresh.
-      final effectiveFacilityId = autoSelectedFacility?.id;
+      // Distributors use their UUID; others use selected facility ID.
+      final effectiveFacilityId =
+          isDistributor ? context.loggedInUserUuid : autoSelectedFacility?.id;
 
       if (effectiveFacilityId != null) {
         // Load UserAction balances first (from deliveries) so UI shows them immediately
