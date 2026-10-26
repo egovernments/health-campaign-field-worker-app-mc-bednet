@@ -347,13 +347,27 @@ final dynamic sampleCloseHouseholdFlows = {
                     "data": [
                       {
                         "key": "latestBeneficiaryId",
-                        "value": "{{navigation.UNIQUE_BENEFICIARY_ID}}"
+                        "value": "{{latestBeneficiaryId}}"
                       }
                     ],
                     "onError": [
                       {
                         "actionType": "SHOW_TOAST",
                         "properties": {"message": "Failed to fetch config."}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "actionType": "UPDATE_IDENTIFIER_STATUS",
+                  "properties": {
+                    "identifierType": "UNIQUE_BENEFICIARY_ID",
+                    "onError": [
+                      {
+                        "actionType": "SHOW_TOAST",
+                        "properties": {
+                          "message": "Failed to update beneficiary id status."
+                        }
                       }
                     ]
                   }
@@ -387,7 +401,7 @@ final dynamic sampleCloseHouseholdFlows = {
                       },
                       {
                         "key": "UNIQUE_BENEFICIARY_ID",
-                        "value": "{{navigation.UNIQUE_BENEFICIARY_ID}}"
+                        "value": "{{latestBeneficiaryId}}"
                       },
                       {
                         "key": "uniqueBeneficiaryIdModel",
@@ -466,13 +480,27 @@ final dynamic sampleCloseHouseholdFlows = {
                 "data": [
                   {
                     "key": "latestBeneficiaryId",
-                    "value": "{{navigation.UNIQUE_BENEFICIARY_ID}}"
+                    "value": "{{latestBeneficiaryId}}"
                   }
                 ],
                 "onError": [
                   {
                     "actionType": "SHOW_TOAST",
                     "properties": {"message": "Failed to fetch config."}
+                  }
+                ]
+              }
+            },
+            {
+              "actionType": "UPDATE_IDENTIFIER_STATUS",
+              "properties": {
+                "identifierType": "UNIQUE_BENEFICIARY_ID",
+                "onError": [
+                  {
+                    "actionType": "SHOW_TOAST",
+                    "properties": {
+                      "message": "Failed to update beneficiary id status."
+                    }
                   }
                 ]
               }
@@ -511,7 +539,7 @@ final dynamic sampleCloseHouseholdFlows = {
                   },
                   {
                     "key": "UNIQUE_BENEFICIARY_ID",
-                    "value": "{{navigation.UNIQUE_BENEFICIARY_ID}}"
+                    "value": "{{latestBeneficiaryId}}"
                   }
                   // {
                   //   "key": "latestBeneficiaryId",

@@ -1228,8 +1228,8 @@ final jsonConfig = {
           "IdentifierModel": {
             "mappings": {
               "id": "id",
-              "identifierType": "__value:DEFAULT",
-              "identifierId": "__generate:uuid",
+              "identifierType": "__value:UNIQUE_BENEFICIARY_ID",
+              "identifierId": "__context:latestBeneficiaryId",
 
               // "identifierType": "closeHouseholdDetails.identifiers[0]",
               // "identifierId": "closeHouseholdDetails.identifiers[1]",
@@ -1289,7 +1289,7 @@ final jsonConfig = {
           "id": "beneficiaryDetails.id",
           "projectId": "__context:projectId",
           "tenantId": "__context:tenantId",
-          "beneficiaryId": "beneficiaryDetails.beneficiaryId",
+          "beneficiaryId": "__context:latestBeneficiaryId",
           "tag": "closeHouseholdDetails.scanner",
           "beneficiaryClientReferenceId":
               "__switch:__context:beneficiaryType:{INDIVIDUAL:__ref:IndividualModel.clientReferenceId,HOUSEHOLD:__ref:HouseholdModel.clientReferenceId}",
