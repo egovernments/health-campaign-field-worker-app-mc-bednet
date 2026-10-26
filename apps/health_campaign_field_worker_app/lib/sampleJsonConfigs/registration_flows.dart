@@ -630,9 +630,25 @@ final dynamic sampleFlows = {
           "onAction": [
             {
               "actionType": "NAVIGATION",
-              "properties": {"name": "searchBeneficiary", "type": "TEMPLATE"}
+              "properties": {
+                "name": "searchBeneficiary",
+                "type": "TEMPLATE",
+                "navigationMode": "popUntilAndReplace",
+                "popUntilPageName": "searchBeneficiary"
+              }
             }
           ]
+        }
+      ],
+      "onSystemBack": [
+        {
+          "actionType": "NAVIGATION",
+          "properties": {
+            "name": "searchBeneficiary",
+            "type": "TEMPLATE",
+            "navigationMode": "popUntilAndReplace",
+            "popUntilPageName": "searchBeneficiary"
+          }
         }
       ],
       "heading": "REGISTRATION_HOUSEHOLD_OVERVIEW_HEADING",
@@ -1017,9 +1033,25 @@ final dynamic sampleFlows = {
           "onAction": [
             {
               "actionType": "NAVIGATION",
-              "properties": {"name": "searchBeneficiary", "type": "TEMPLATE"}
+              "properties": {
+                "name": "searchBeneficiary",
+                "type": "TEMPLATE",
+                "navigationMode": "popUntilAndReplace",
+                "popUntilPageName": "searchBeneficiary"
+              }
             }
           ]
+        }
+      ],
+      "onSystemBack": [
+        {
+          "actionType": "NAVIGATION",
+          "properties": {
+            "name": "searchBeneficiary",
+            "type": "TEMPLATE",
+            "navigationMode": "popUntilAndReplace",
+            "popUntilPageName": "searchBeneficiary"
+          }
         }
       ],
       "heading": "REGISTRATION_HOUSEHOLD_OVERVIEW_HEADING",

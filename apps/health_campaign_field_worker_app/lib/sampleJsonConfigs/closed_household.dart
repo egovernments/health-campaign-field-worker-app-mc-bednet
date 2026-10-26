@@ -670,8 +670,27 @@ final dynamic sampleCloseHouseholdFlows = {
           "label": "HOUSEHOLD_BACK",
           "format": "backLink",
           "onAction": [
-            {"actionType": "BACK_NAVIGATION", "properties": {}}
+            {
+              "actionType": "NAVIGATION",
+              "properties": {
+                "name": "closeHouseholdRegistration",
+                "type": "FORM",
+                "navigationMode": "popUntilAndReplace",
+                "popUntilPageName": "closeHouseholdRegistration"
+              }
+            }
           ]
+        }
+      ],
+      "onSystemBack": [
+        {
+          "actionType": "NAVIGATION",
+          "properties": {
+            "name": "closeHouseholdRegistration",
+            "type": "FORM",
+            "navigationMode": "popUntilAndReplace",
+            "popUntilPageName": "closeHouseholdRegistration"
+          }
         }
       ],
       "heading": "",
