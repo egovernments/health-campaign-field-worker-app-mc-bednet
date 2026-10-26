@@ -145,8 +145,7 @@ class ActionHandler {
             contextData['navigation'] as Map<String, dynamic>? ?? {};
 
         // Use the active page instance key when reading instance-specific UI state.
-        final stateKey =
-            getEffectiveCompositeKey(context, contextData) ??
+        final stateKey = getEffectiveCompositeKey(context, contextData) ??
             getEffectiveScreenKey(context, contextData) ??
             '';
 
@@ -173,6 +172,36 @@ class ActionHandler {
 
         addWithTypeConversion(formData);
         addWithTypeConversion(navigation);
+
+        // Include scalar values produced by prior actions in the same chain.
+        // This keeps condition checks accurate even when registry widgetData
+        // is not yet updated for the active screen instance.
+        const reservedContextKeys = {
+          'formData',
+          'navigation',
+          'entities',
+          'wrappers',
+          'widgetData',
+          'item',
+          '_compositeKey',
+          '_instanceId',
+          'parentScreenKey',
+        };
+        contextData.forEach((key, value) {
+          if (reservedContextKeys.contains(key)) return;
+          if (value is String ||
+              value is num ||
+              value is bool ||
+              value == null) {
+            if (value == 'true') {
+              evaluationData[key] = true;
+            } else if (value == 'false') {
+              evaluationData[key] = false;
+            } else {
+              evaluationData[key] = value;
+            }
+          }
+        });
 
         debugPrint('CONDITION_EVAL: navigation=$navigation');
         debugPrint(
@@ -254,9 +283,22 @@ class ActionHandler {
           final condition = condActionJson['condition'] as Map<String, dynamic>;
           var expression = condition['expression'] as String?;
 
-          // Resolve any variable paths from stateWrapper/item context
+          // Resolve templates/functions against the merged evaluation context
+          // so conditions can use values produced earlier in the same action
+          // chain (e.g., uniqueIdPoolCount from LOAD_UNIQUE_ID_POOL).
           if (expression != null && expression != 'DEFAULT') {
-            expression = resolveTemplate(expression, stateWrapper);
+            expression = resolveTemplate(
+              expression,
+              {
+                ...evaluationData,
+                'navigation': navigation,
+                'widgetData': widgetData,
+                if (item != null) 'item': item,
+                if (stateWrapper != null) 'contextData': stateWrapper,
+              },
+              widgetData: Map<String, dynamic>.from(widgetData),
+              stateData: CrudStateData({}, stateWrapper ?? const []),
+            );
           }
 
           // Create a copy of condition with resolved expression to avoid mutating original config

@@ -287,6 +287,7 @@ final dynamic sampleCloseHouseholdFlows = {
           "includeInSummary": null,
           "autoEnable": null,
           "onAction": [
+            {"actionType": "LOAD_UNIQUE_ID_POOL"},
             {
               "actions": [
                 {
@@ -407,6 +408,7 @@ final dynamic sampleCloseHouseholdFlows = {
       "overView": "CLOSEHOUSEHOLD_SUMMARY_HEADING",
       "summary": false,
       "onAction": [
+        {"actionType": "LOAD_UNIQUE_ID_POOL"},
         {
           "actions": [
             {
