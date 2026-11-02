@@ -157,42 +157,38 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   //_onLogout event logs out the user and deletes the saved user details from local storage
-  // Callers are expected to have already confirmed connectivity (see
-  // ensureOnlineOrAlert) — if the API call still fails here, the local
-  // session is left untouched so the user stays logged in.
+  // Backend logout is best-effort only: local logout must still complete so
+  // users are always moved to the login flow after confirmation.
   FutureOr<void> _onLogout(AuthLogoutEvent event, AuthEmitter emit) async {
+    final payload = await _buildLogoutPayload();
     try {
-      final payload = await _buildLogoutPayload();
-      if (payload['access_token'] == null ||
-          (payload['access_token'] as String).isEmpty) {
-        _showLogoutFailureAlert('Unable to logout: missing access token.');
-        return;
-      }
-
       await authRepository.logOutUser(
         logoutPath: Constants.logoutUserPath,
         body: payload,
       );
     } on DioException catch (e) {
-      final message = _extractDioErrorMessage(e);
-      _showLogoutFailureAlert(message);
       AppLogger.instance.error(
         title: 'Logout API error',
         message: '${e.response?.statusCode}: ${e.response?.data}',
       );
-      return;
     } catch (e) {
-      _showLogoutFailureAlert('Logout failed. Please try again.');
       AppLogger.instance.error(
         title: 'Logout API error',
         message: '$e',
       );
-      return;
     }
 
-    await _deleteUserLocalDatabaseData();
-    await localSecureStore.deleteAll();
-    await localSecureStore.setBoundaryRefetch(true);
+    try {
+      await _deleteUserLocalDatabaseData();
+      await localSecureStore.deleteAll();
+      await localSecureStore.setBoundaryRefetch(true);
+    } catch (e) {
+      AppLogger.instance.error(
+        title: 'Logout local cleanup error',
+        message: '$e',
+      );
+    }
+
     // NOTE: do NOT clear isar.appConfigurations here. Its partner — the
     // login-time MDMS re-fetch (AppInitializationSetupEvent on re-auth) — was
     // removed to stop login-screen flicker, so clearing on logout left the
@@ -202,34 +198,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     // the cached copy across logout instead of wiping it.
     DigitDataModelSingleton().setHierarchyType(null);
     emit(const AuthUnauthenticatedState());
-  }
-
-  String _extractDioErrorMessage(DioException error) {
-    final data = error.response?.data;
-
-    if (data is Map<String, dynamic>) {
-      final directMessage = data['message'];
-      if (directMessage is String && directMessage.trim().isNotEmpty) {
-        return directMessage;
-      }
-
-      final errors = data['Errors'];
-      if (errors is List && errors.isNotEmpty) {
-        final first = errors.first;
-        if (first is Map<String, dynamic>) {
-          final msg = first['message'];
-          if (msg is String && msg.trim().isNotEmpty) {
-            return msg;
-          }
-        }
-      }
-    }
-
-    final fallback = error.response?.statusMessage;
-    if (fallback != null && fallback.trim().isNotEmpty) {
-      return fallback;
-    }
-    return 'Logout failed. Please try again.';
   }
 
   String _extractLoginErrorMessage(DioException error) {
@@ -249,19 +217,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
 
     return 'Unable to login. Please try again.';
-  }
-
-  void _showLogoutFailureAlert(String message) {
-    final messenger = scaffoldMessengerKey.currentState;
-    if (messenger == null) return;
-
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-        ),
-      );
   }
 
   Future<Map<String, dynamic>> _buildLogoutPayload() async {

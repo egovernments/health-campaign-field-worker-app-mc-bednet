@@ -121,10 +121,9 @@ Future<bool> ensureOnlineOrAlert(BuildContext context) async {
 ///
 /// Flow:
 /// 1. Optional confirmation popup
-/// 2. Online check
-/// 3. Push token unregister (best effort)
-/// 4. Boundary/localization reset
-/// 5. Auth logout
+/// 2. Push token unregister (best effort)
+/// 3. Boundary/localization reset
+/// 4. Auth logout
 Future<void> performAppLogout(
   BuildContext context, {
   bool requireConfirmation = true,
@@ -177,7 +176,6 @@ Future<void> performAppLogout(
 }
 
 Future<void> _executeLogout(BuildContext context) async {
-  if (!await ensureOnlineOrAlert(context)) return;
   if (!context.mounted) return;
 
   final authBloc = _readBlocOrNull<AuthBloc>(context);
