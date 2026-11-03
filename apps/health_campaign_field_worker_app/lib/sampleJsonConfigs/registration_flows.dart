@@ -1012,7 +1012,9 @@ final dynamic sampleFlows = {
               "properties": {
                 "data": [],
                 "name": "searchBeneficiary",
-                "type": "TEMPLATE"
+                "type": "TEMPLATE",
+                "navigationMode": "popUntilAndReplace",
+                "popUntilPageName": "searchBeneficiary"
               }
             }
           ],
@@ -1732,7 +1734,7 @@ final dynamic sampleFlows = {
           "format": "actionPopup",
           "visible":
               "{{fn:hasMinimumBeneficiaryId(singleton.beneficiaryIdMinCount, uniqueIdPoolCount)}}==false",
-          "disabled": "false",
+          "disabled": "{{uniqueIdPoolLoading}} == true",
           "fieldName": "beneficiaryIdMinCheck",
           "properties": {
             "icon": "FilterAlt",
@@ -1818,6 +1820,8 @@ final dynamic sampleFlows = {
           "type": "template",
           "label": "REGISTER_NEW_BENEFICIARY",
           "format": "button",
+          "disabled":
+              "{{searchBar}} == null || {{searchBar}} == '' || {{uniqueIdPoolLoading}} == true",
           "fieldName": "registerNewBeneficiary",
           "onAction": [
             {
