@@ -328,6 +328,11 @@ class _FacilityCardContent extends StatelessWidget {
             (selectedValue == null || selectedValue.isEmpty)) {
           selectedValue = deliveryTeamCode;
           final loggedInUserId = context.loggedInUserUuid;
+          final loggedInUserName = context.loggedInUser.userName;
+          final deliveryTeamQrValue =
+              (loggedInUserName?.trim().isNotEmpty ?? false)
+                  ? '$loggedInUserName||$loggedInUserId'
+                  : loggedInUserId;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             field.control.value = deliveryTeamCode;
             field.control.markAsTouched();
@@ -346,7 +351,7 @@ class _FacilityCardContent extends StatelessWidget {
                     schemaKey: pageSchema,
                     context: context,
                     key: dependantFormKey,
-                    value: loggedInUserId,
+                    value: deliveryTeamQrValue,
                   ),
                 );
           });
@@ -360,6 +365,11 @@ class _FacilityCardContent extends StatelessWidget {
             (selectedValue == null || selectedValue.isEmpty)) {
           selectedValue = deliveryTeamCode;
           final loggedInUserId = context.loggedInUserUuid;
+          final loggedInUserName = context.loggedInUser.userName;
+          final deliveryTeamQrValue =
+              (loggedInUserName?.trim().isNotEmpty ?? false)
+                  ? '$loggedInUserName||$loggedInUserId'
+                  : loggedInUserId;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             field.control.value = deliveryTeamCode;
             field.control.markAsTouched();
@@ -377,7 +387,7 @@ class _FacilityCardContent extends StatelessWidget {
                     schemaKey: pageSchema,
                     context: context,
                     key: dependantFormKey,
-                    value: loggedInUserId,
+                    value: deliveryTeamQrValue,
                   ),
                 );
           });
