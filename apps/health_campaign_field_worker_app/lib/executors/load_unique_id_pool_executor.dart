@@ -75,7 +75,11 @@ class LoadUniqueIdPoolExecutor extends ActionExecutor {
         'latestBeneficiaryId': latestIdModel?.id,
         'latestBeneficiaryIdModel': latestIdModel,
       };
-    } catch (e) {
+    } catch (e, stackTrace) {
+      // Without this the search screen silently shows no pool count, which
+      // sends the user to the low-ID popup and a DEFAULT identifier.
+      debugPrint(
+          'LOAD_UNIQUE_ID_POOL: failed to load the pool: $e\n$stackTrace');
       return contextData;
     }
   }

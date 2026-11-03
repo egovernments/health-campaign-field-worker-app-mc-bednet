@@ -1752,7 +1752,7 @@ final dynamic sampleFlows = {
                       "REGISTRATION_SEARCH_BENEFICIARY_SKIP_CONTINUE_LABEL",
                   "format": "button",
                   "visible":
-                      "{{registrationBeneficiaryIdValidationEnabled}}==false",
+                      "{{registrationBeneficiaryIdValidationEnabled}}==false && {{fn:hasMinimumBeneficiaryId(1, uniqueIdPoolCount)}}==true",
                   "onAction": [
                     {
                       "actionType": "CLOSE_POPUP",
@@ -1839,7 +1839,7 @@ final dynamic sampleFlows = {
                               "REGISTRATION_SEARCH_BENEFICIARY_SKIP_CONTINUE_LABEL",
                           "format": "button",
                           "visible":
-                              "{{registrationBeneficiaryIdValidationEnabled}}==false",
+                              "{{registrationBeneficiaryIdValidationEnabled}}==false && {{fn:hasMinimumBeneficiaryId(1, uniqueIdPoolCount)}}==true",
                           "onAction": [
                             {
                               "actionType": "CLOSE_POPUP",
@@ -2995,6 +2995,21 @@ final dynamic sampleFlows = {
                   }
                 },
                 {
+                  "actionType": "UPDATE_IDENTIFIER_STATUS",
+                  "properties": {
+                    "identifierType": "UNIQUE_BENEFICIARY_ID",
+                    "mode": "edit",
+                    "onError": [
+                      {
+                        "actionType": "SHOW_TOAST",
+                        "properties": {
+                          "message": "Failed to update beneficiary id status."
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
                   "actionType": "UPDATE_EVENT",
                   "properties": {
                     "entity": "HouseholdModel, IndividualModel, TaskModel",
@@ -3051,6 +3066,21 @@ final dynamic sampleFlows = {
                       }
                     ],
                     "configName": "beneficiaryRegistration"
+                  }
+                },
+                {
+                  "actionType": "UPDATE_IDENTIFIER_STATUS",
+                  "properties": {
+                    "identifierType": "UNIQUE_BENEFICIARY_ID",
+                    "mode": "edit",
+                    "onError": [
+                      {
+                        "actionType": "SHOW_TOAST",
+                        "properties": {
+                          "message": "Failed to update beneficiary id status."
+                        }
+                      }
+                    ]
                   }
                 },
                 {
@@ -3583,6 +3613,21 @@ final dynamic sampleFlows = {
                   }
                 },
                 {
+                  "actionType": "UPDATE_IDENTIFIER_STATUS",
+                  "properties": {
+                    "identifierType": "UNIQUE_BENEFICIARY_ID",
+                    "mode": "edit",
+                    "onError": [
+                      {
+                        "actionType": "SHOW_TOAST",
+                        "properties": {
+                          "message": "Failed to update beneficiary id status."
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
                   "actionType": "UPDATE_EVENT",
                   "properties": {
                     "entity":
@@ -3640,6 +3685,21 @@ final dynamic sampleFlows = {
                       }
                     ],
                     "configName": "beneficiaryRegistration"
+                  }
+                },
+                {
+                  "actionType": "UPDATE_IDENTIFIER_STATUS",
+                  "properties": {
+                    "identifierType": "UNIQUE_BENEFICIARY_ID",
+                    "mode": "edit",
+                    "onError": [
+                      {
+                        "actionType": "SHOW_TOAST",
+                        "properties": {
+                          "message": "Failed to update beneficiary id status."
+                        }
+                      }
+                    ]
                   }
                 },
                 {
@@ -4082,6 +4142,7 @@ final dynamic sampleFlows = {
               "actionType": "UPDATE_IDENTIFIER_STATUS",
               "properties": {
                 "identifierType": "UNIQUE_BENEFICIARY_ID",
+                "mode": "edit",
                 "onError": [
                   {
                     "actionType": "SHOW_TOAST",
@@ -4159,6 +4220,7 @@ final dynamic sampleFlows = {
               "actionType": "UPDATE_IDENTIFIER_STATUS",
               "properties": {
                 "identifierType": "UNIQUE_BENEFICIARY_ID",
+                "mode": "edit",
                 "onError": [
                   {
                     "actionType": "SHOW_TOAST",
