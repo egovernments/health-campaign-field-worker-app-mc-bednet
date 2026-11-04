@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../utils/beneficiary_id_allocator.dart';
+import '../../utils/session/device_id_resolution.dart';
 
 part 'unique_id.freezed.dart';
 
@@ -70,7 +71,12 @@ class UniqueIdBloc extends Bloc<UniqueIdEvent, UniqueIdState> {
     try {
       final deviceInfo = DeviceInfoPlugin();
       final androidInfo = await deviceInfo.androidInfo;
-      final deviceUuid = androidInfo.id;
+      // Prefer Android ID from raw info map when available; fallback to
+      // Build.ID (`androidInfo.id`) so download flow never fails.
+      final data = androidInfo.data;
+      final rawAndroidId =
+          data['androidId']?.toString() ?? data['android_id']?.toString();
+      final deviceUuid = usableId(rawAndroidId) ?? androidInfo.id;
 
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {

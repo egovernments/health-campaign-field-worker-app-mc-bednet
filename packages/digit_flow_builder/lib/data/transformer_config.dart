@@ -51,7 +51,8 @@ final jsonConfig = {
             "childrenCount": "householdDetails.childrenCount",
             "pregnantWomenCount": "householdDetails.pregnantWomenCount",
             "memberCount": "householdDetails.memberCount",
-            "caregiverConsent": "caregiverConsent.consentToParticipate"
+            "caregiverConsent": "caregiverConsent.consentToParticipate",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           }
         }
       },
@@ -87,7 +88,8 @@ final jsonConfig = {
             "weight": "beneficiaryDetails.weight",
             "height": "beneficiaryDetails.height",
             "isPregnant": "beneficiaryDetails.isPregnant",
-            "lastName": "householdDetails.lastName"
+            "lastName": "householdDetails.lastName",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "bloodGroup": "health.bloodGroup",
           "gender": "beneficiaryDetails.gender",
@@ -165,7 +167,8 @@ final jsonConfig = {
           /// Note: Generate uuid
           "rowVersion": "meta.rowVersion",
           "dateOfRegistration": "householdDetails.dateOfRegistration",
-          "additionalFields": "additionalInfo.fields",
+          // No form fills `additionalInfo.fields`; the stamp is the only extra.
+          "additionalFields": {"cycleIndexStamp": "__context:cycleIndexStamp"},
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit",
         }
@@ -193,7 +196,8 @@ final jsonConfig = {
             "dateOfBirth": "beneficiaryDetails.dobPicker",
             "individualClientReferenceId":
                 "__ref:IndividualModel.clientReferenceId",
-            "beneficiaryId": "beneficiaryDetails.beneficiaryId"
+            "beneficiaryId": "beneficiaryDetails.beneficiaryId",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit",
@@ -222,6 +226,7 @@ final jsonConfig = {
           "rowVersion": "meta.rowVersion",
           "auditDetails": "__generate:audit",
           "clientAuditDetails": "__generate:clientAudit",
+          "additionalFields": {"cycleIndexStamp": "__context:cycleIndexStamp"},
         }
       }
     }
@@ -277,7 +282,8 @@ final jsonConfig = {
             "childrenCount": "householdDetails.childrenCount",
             "pregnantWomenCount": "householdDetails.pregnantWomenCount",
             "memberCount": "householdDetails.memberCount",
-            "caregiverConsent": "caregiverConsent.consentToParticipate"
+            "caregiverConsent": "caregiverConsent.consentToParticipate",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           }
         }
       }
@@ -318,7 +324,8 @@ final jsonConfig = {
           "additionalFields": {
             "weight": "beneficiaryDetails.weight",
             "height": "beneficiaryDetails.height",
-            "isPregnant": "beneficiaryDetails.isPregnant"
+            "isPregnant": "beneficiaryDetails.isPregnant",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "bloodGroup": "health.bloodGroup",
           "gender": "beneficiaryDetails.gender",
@@ -396,7 +403,8 @@ final jsonConfig = {
           /// Note: Generate uuid
           "rowVersion": "meta.rowVersion",
           "dateOfRegistration": "__value:DATETIME.NOW",
-          "additionalFields": "additionalInfo.fields",
+          // No form fills `additionalInfo.fields`; the stamp is the only extra.
+          "additionalFields": {"cycleIndexStamp": "__context:cycleIndexStamp"},
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit",
         }
@@ -423,7 +431,8 @@ final jsonConfig = {
             "dateOfBirth": "beneficiaryDetails.dobPicker",
             "individualClientReferenceId":
                 "__ref:IndividualModel.clientReferenceId",
-            "beneficiaryId": "beneficiaryDetails.beneficiaryId"
+            "beneficiaryId": "beneficiaryDetails.beneficiaryId",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit",
@@ -500,7 +509,8 @@ final jsonConfig = {
             "headName": "__context:headName",
             "headGender": "__context:headGender",
             "headDob": "__context:headDob",
-            "headMobileNumber": "__context:headMobileNumber"
+            "headMobileNumber": "__context:headMobileNumber",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit"
@@ -600,7 +610,8 @@ final jsonConfig = {
             "headName": "__context:headName",
             "headGender": "__context:headGender",
             "headDob": "__context:headDob",
-            "headMobileNumber": "__context:headMobileNumber"
+            "headMobileNumber": "__context:headMobileNumber",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit"
@@ -695,7 +706,8 @@ final jsonConfig = {
             "headName": "__context:headName",
             "headGender": "__context:headGender",
             "headDob": "__context:headDob",
-            "headMobileNumber": "__context:headMobileNumber"
+            "headMobileNumber": "__context:headMobileNumber",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit"
@@ -770,7 +782,8 @@ final jsonConfig = {
             "headName": "__context:headName",
             "headGender": "__context:headGender",
             "headDob": "__context:headDob",
-            "headMobileNumber": "__context:headMobileNumber"
+            "headMobileNumber": "__context:headMobileNumber",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit"
@@ -848,7 +861,8 @@ final jsonConfig = {
             "headName": "__context:headName",
             "headGender": "__context:headGender",
             "headDob": "__context:headDob",
-            "headMobileNumber": "__context:headMobileNumber"
+            "headMobileNumber": "__context:headMobileNumber",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit"
@@ -925,7 +939,8 @@ final jsonConfig = {
                 "__switch:__context:stockEntryType:{ISSUED:__value:IN_TRANSIT,RETURNED:__value:IN_TRANSIT,LOSS:__value:LOST,DAMAGED:__value:DAMAGED}",
             "scanResource": "stockProductDetails.scanResource",
             "quantityWastage": "stockProductDetails.quantityWastage",
-            "quantityPartialUsed": "stockProductDetails.quantityPartialUsed"
+            "quantityPartialUsed": "stockProductDetails.quantityPartialUsed",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit",
@@ -966,7 +981,8 @@ final jsonConfig = {
             "wayBillNumber": "stockReceiptDetails.wayBillNumber",
             "stockEntryType": "__context:stockEntryType",
             "primaryRole": "__context:primaryRole",
-            "secondaryRole": "__context:secondaryRole"
+            "secondaryRole": "__context:secondaryRole",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit",
@@ -1005,7 +1021,8 @@ final jsonConfig = {
             "mrnNumber": "__context:mrnNumber",
             "stockEntryType": "__context:stockEntryType",
             "primaryRole": "__context:primaryRole",
-            "secondaryRole": "__context:secondaryRole"
+            "secondaryRole": "__context:secondaryRole",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit",
@@ -1041,7 +1058,8 @@ final jsonConfig = {
             "sku": "lessExcessDetails.productVariant.sku",
             "mrnNumber": "__context:mrnNumber",
             "stockEntryType": "__context:stockEntryType",
-            "adjustmentReason": "lessExcessDetails.reasonForLessExcess"
+            "adjustmentReason": "lessExcessDetails.reasonForLessExcess",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit",
@@ -1086,7 +1104,8 @@ final jsonConfig = {
             "stockLess":
                 "stockRecon.stockReconciliationCard.stockMetrics.stockLess",
             "stockInHand":
-                "stockRecon.stockReconciliationCard.stockMetrics.stockInHand"
+                "stockRecon.stockReconciliationCard.stockMetrics.stockInHand",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit",
@@ -1142,7 +1161,8 @@ final jsonConfig = {
             "supervisorName": "complaintDetails.supervisorName",
             "supervisorContactNumber":
                 "complaintDetails.supervisorContactNumber ",
-            "otherComplaintDescription": "complaintType.otherReason"
+            "otherComplaintDescription": "complaintType.otherReason",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           },
           "clientAuditDetails": "__generate:clientAudit"
         }
@@ -1233,6 +1253,7 @@ final jsonConfig = {
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit",
           "boundaryCode": "__context:boundary.code",
+          "additionalFields": {"cycleIndexStamp": "__context:cycleIndexStamp"},
         },
         "listMappings": {
           "IdentifierModel": {
@@ -1309,7 +1330,8 @@ final jsonConfig = {
           /// Note: Generate uuid
           "rowVersion": "meta.rowVersion",
           "dateOfRegistration": "__value:DATETIME.NOW",
-          "additionalFields": "additionalInfo.fields",
+          // No form fills `additionalInfo.fields`; the stamp is the only extra.
+          "additionalFields": {"cycleIndexStamp": "__context:cycleIndexStamp"},
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit",
         }
@@ -1330,7 +1352,8 @@ final jsonConfig = {
           /// Note: Generate uuid
           "tenantId": "__context:tenantId",
           "rowVersion": "meta.rowVersion",
-          "additionalFields": "additionalInfo.fields",
+          // No form fills `additionalInfo.fields`; the stamp is the only extra.
+          "additionalFields": {"cycleIndexStamp": "__context:cycleIndexStamp"},
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit",
         }
@@ -1383,7 +1406,8 @@ final jsonConfig = {
             "clientAuditDetails": "__generate:clientAudit",
             "auditDetails": "__generate:audit"
           },
-          "additionalFields": "additionalInfo.fields",
+          // No form fills `additionalInfo.fields`; the stamp is the only extra.
+          "additionalFields": {"cycleIndexStamp": "__context:cycleIndexStamp"},
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit"
         }
@@ -1424,6 +1448,7 @@ final jsonConfig = {
             "dateOfEvaluation": "facilityDetails.dateOfEvaluation",
             "referredBy": "facilityDetails.referredByKey",
             "hfCoordinator": "facilityDetails.hfCoordinator",
+            "cycleIndexStamp": "__context:cycleIndexStamp",
             // Checklist fields from side effect pages (sideEffectSick, sideEffectFever,
             // sideEffectFromCurrentCycle, sideEffectFromPreviousCycle) are automatically
             // captured as unmapped fields and merged into additionalFields via fallbackModel.
@@ -1469,7 +1494,8 @@ final jsonConfig = {
             "ec4Value": "__context:ec4",
             "ec5Value": "__context:ec5",
             // Referral reasons mapped from checklist: SICK for ec1=YES, FEVER for ec2=YES
-            "referralReasons": "__context:referralReasons"
+            "referralReasons": "__context:referralReasons",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
           }
         }
       }
