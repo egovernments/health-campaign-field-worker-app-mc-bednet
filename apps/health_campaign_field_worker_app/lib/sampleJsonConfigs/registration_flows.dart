@@ -1734,7 +1734,8 @@ final dynamic sampleFlows = {
           "format": "actionPopup",
           "visible":
               "{{fn:hasMinimumBeneficiaryId(singleton.beneficiaryIdMinCount, uniqueIdPoolCount)}}==false",
-          "disabled": "{{uniqueIdPoolLoading}} == true",
+          "disabled":
+              "{{uniqueIdPoolLoading}} == true && {{uniqueIdPoolCount}} == null",
           "fieldName": "beneficiaryIdMinCheck",
           "properties": {
             "icon": "FilterAlt",
@@ -1821,7 +1822,7 @@ final dynamic sampleFlows = {
           "label": "REGISTER_NEW_BENEFICIARY",
           "format": "button",
           "disabled":
-              "{{searchBar}} == null || {{searchBar}} == '' || {{uniqueIdPoolLoading}} == true",
+              "({{uniqueIdPoolLoading}} == true && {{uniqueIdPoolCount}} == null) || {{fn:hasMinimumBeneficiaryId(singleton.beneficiaryIdMinCount, uniqueIdPoolCount)}}==false",
           "fieldName": "registerNewBeneficiary",
           "onAction": [
             {
@@ -3314,7 +3315,7 @@ final dynamic sampleFlows = {
               "format": "mobileNumber",
               "hidden": false,
               "isMdms": false,
-              "pattern": "^\\d+",
+              "pattern": "^0[789]\\d{9}\$",
               "tooltip":
                   "APPONE_REGISTRATION_BENEFICIARYDETAILS_label_phone_tooltip",
               "helpText":
@@ -3341,7 +3342,7 @@ final dynamic sampleFlows = {
                 },
                 {
                   "type": "pattern",
-                  "value": "^\\d+",
+                  "value": "^0[789]\\d{9}\$",
                   "message": "MB_ONLY_NUMBER"
                 },
                 {
