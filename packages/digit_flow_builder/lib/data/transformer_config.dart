@@ -498,6 +498,8 @@ final jsonConfig = {
             "ageInMonths": "__context:ageInMonths",
             "gender": "__context:gender",
             "headName": "__context:headName",
+            "headGender": "__context:headGender",
+            "headDob": "__context:headDob",
             "headMobileNumber": "__context:headMobileNumber"
           },
           "clientAuditDetails": "__generate:clientAudit",
@@ -596,6 +598,8 @@ final jsonConfig = {
             "ageInMonths": "__context:ageInMonths",
             "gender": "__context:gender",
             "headName": "__context:headName",
+            "headGender": "__context:headGender",
+            "headDob": "__context:headDob",
             "headMobileNumber": "__context:headMobileNumber"
           },
           "clientAuditDetails": "__generate:clientAudit",
@@ -689,6 +693,8 @@ final jsonConfig = {
             "ageInMonths": "__context:ageInMonths",
             "gender": "__context:gender",
             "headName": "__context:headName",
+            "headGender": "__context:headGender",
+            "headDob": "__context:headDob",
             "headMobileNumber": "__context:headMobileNumber"
           },
           "clientAuditDetails": "__generate:clientAudit",
@@ -762,6 +768,8 @@ final jsonConfig = {
             "ageInMonths": "__context:ageInMonths",
             "gender": "__context:gender",
             "headName": "__context:headName",
+            "headGender": "__context:headGender",
+            "headDob": "__context:headDob",
             "headMobileNumber": "__context:headMobileNumber"
           },
           "clientAuditDetails": "__generate:clientAudit",
@@ -838,6 +846,8 @@ final jsonConfig = {
             "ageInMonths": "__context:ageInMonths",
             "gender": "__context:gender",
             "headName": "__context:headName",
+            "headGender": "__context:headGender",
+            "headDob": "__context:headDob",
             "headMobileNumber": "__context:headMobileNumber"
           },
           "clientAuditDetails": "__generate:clientAudit",

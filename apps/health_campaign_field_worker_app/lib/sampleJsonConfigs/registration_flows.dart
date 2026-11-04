@@ -595,9 +595,29 @@ final dynamic sampleFlows = {
                             "{{contextData.0.headIndividual.IndividualModel.name.givenName}}"
                       },
                       {
+                        "key": "headName",
+                        "value":
+                            "{{contextData.0.headIndividual.IndividualModel.name.givenName}}"
+                      },
+                      {
                         "key": "lastName",
                         "value":
                             "{{contextData.0.headIndividual.IndividualModel.name.familyName}}"
+                      },
+                      {
+                        "key": "headGender",
+                        "value":
+                            "{{contextData.0.headIndividual.IndividualModel.gender}}"
+                      },
+                      {
+                        "key": "headDob",
+                        "value":
+                            "{{contextData.0.headIndividual.IndividualModel.dateOfBirth}}"
+                      },
+                      {
+                        "key": "individualClientReferenceId",
+                        "value":
+                            "{{contextData.0.headIndividual.IndividualModel.clientReferenceId}}"
                       },
                       {
                         "key": "beneficiaryId",
