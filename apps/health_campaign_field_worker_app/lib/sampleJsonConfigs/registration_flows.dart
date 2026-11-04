@@ -2851,6 +2851,18 @@ final dynamic sampleFlows = {
                 "value": "{{navigation.ProjectBeneficiaryClientReferenceId}}"
               },
               {
+                "key": "HouseholdClientReferenceId",
+                "value": "{{navigation.HouseholdClientReferenceId}}"
+              },
+              {
+                "key": "individualClientReferenceId",
+                "value": "{{navigation.individualClientReferenceId}}"
+              },
+              {"key": "headName", "value": "{{navigation.headName}}"},
+              {"key": "headGender", "value": "{{navigation.headGender}}"},
+              {"key": "headDob", "value": "{{navigation.headDob}}"},
+              {"key": "beneficiaryId", "value": "{{navigation.beneficiaryId}}"},
+              {
                 "key": "deliveryComment",
                 "value": "{{navigation.deliveryComment}}"
               }
@@ -2897,6 +2909,21 @@ final dynamic sampleFlows = {
                     "key": "ProjectBeneficiaryClientReferenceId",
                     "value":
                         "{{navigation.ProjectBeneficiaryClientReferenceId}}"
+                  },
+                  {
+                    "key": "HouseholdClientReferenceId",
+                    "value": "{{navigation.HouseholdClientReferenceId}}"
+                  },
+                  {
+                    "key": "individualClientReferenceId",
+                    "value": "{{navigation.individualClientReferenceId}}"
+                  },
+                  {"key": "headName", "value": "{{navigation.headName}}"},
+                  {"key": "headGender", "value": "{{navigation.headGender}}"},
+                  {"key": "headDob", "value": "{{navigation.headDob}}"},
+                  {
+                    "key": "beneficiaryId",
+                    "value": "{{navigation.beneficiaryId}}"
                   }
                 ],
                 "onError": [
