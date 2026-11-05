@@ -47,6 +47,8 @@ class TransformerExecutor extends ActionExecutor {
     Map<String, dynamic>? formValuesToUse = contextData['formData'];
 
     // 🔹 Collect extra key-values from action.properties['data']
+    // First pass uses current contextData directly. A second pass runs after
+    // navigation fallback resolution to fill any unresolved values.
     final Map<String, dynamic> extraContext = {};
     final List<dynamic>? extraData = action.properties['data'];
     if (extraData != null) {
@@ -70,7 +72,7 @@ class TransformerExecutor extends ActionExecutor {
         }
       }
     }
-    debugPrint('TRANSFORMER: Final extraContext=$extraContext');
+    debugPrint('TRANSFORMER: Initial extraContext=$extraContext');
 
     if (formDataConfig != null) {
       final collectedFormData =
@@ -113,9 +115,25 @@ class TransformerExecutor extends ActionExecutor {
     FlowCrudStateRegistry().update(stateKey, flowState);
 
     // Check if this is edit mode (supports both isEdit and isUpdate flags)
-    final navigationParams = contextData['navigation'] is Map
+    Map<String, dynamic>? navigationParams = contextData['navigation'] is Map
         ? Map<String, dynamic>.from(contextData['navigation'] as Map)
         : null;
+
+    if (navigationParams == null || navigationParams.isEmpty) {
+      final keysToTry = <String?>[compositeKey, screenKey];
+      for (final key in keysToTry) {
+        if (key == null) continue;
+        final storedNavParams = FlowCrudStateRegistry().getNavigationParams(key);
+        if (storedNavParams != null && storedNavParams.isNotEmpty) {
+          navigationParams = Map<String, dynamic>.from(storedNavParams);
+          debugPrint(
+            'TRANSFORMER: Loaded navigation params from registry key=$key',
+          );
+          break;
+        }
+      }
+    }
+
     final isEdit = navigationParams?['isEdit'] == true ||
         navigationParams?['isEdit'] == 'true' ||
         navigationParams?['isUpdate'] == true ||
@@ -130,6 +148,40 @@ class TransformerExecutor extends ActionExecutor {
       debugPrint(
           'TRANSFORMER: Added navigation params to formValues: $navigationParams');
     }
+
+    // Second pass: resolve missing extraContext entries using resolved
+    // navigation params (from context or registry).
+    if (extraData != null && extraData.isNotEmpty) {
+      final resolutionContext = <String, dynamic>{
+        ...contextData,
+        if (navigationParams != null && navigationParams.isNotEmpty)
+          'navigation': navigationParams,
+      };
+
+      for (final entry in extraData) {
+        final key = entry['key'] as String;
+        if (extraContext[key] != null) continue;
+
+        final valuePath = entry['value'];
+        if (valuePath == null) continue;
+
+        dynamic resolvedValue;
+        if (valuePath is String) {
+          resolvedValue = resolveValue(valuePath, resolutionContext);
+        } else {
+          resolvedValue = valuePath;
+        }
+
+        if (resolvedValue != null) {
+          extraContext[key] = resolvedValue;
+          debugPrint(
+            'TRANSFORMER: Backfilled extraContext key=$key, value=$resolvedValue',
+          );
+        }
+      }
+    }
+
+    debugPrint('TRANSFORMER: Final extraContext=$extraContext');
 
     // Check if we should force create new entities even in edit mode
     // This is useful for inventory where edit prefills form but submits as new entities

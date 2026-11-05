@@ -552,7 +552,8 @@ final dynamic sampleFlows = {
                     "data": [
                       {
                         "key": "ProjectBeneficiaryClientReferenceId",
-                        "value": "{{navigation.test0012}}"
+                        "value":
+                            "{{navigation.ProjectBeneficiaryClientReferenceId}}"
                       },
                       {
                         "key": "HouseholdClientReferenceId",
@@ -2486,7 +2487,23 @@ final dynamic sampleFlows = {
                   {
                     "key": "ProjectBeneficiaryClientReferenceId",
                     "value":
-                        "{{navigation.projectBeneficiaryClientReferenceId}}"
+                        "{{navigation.ProjectBeneficiaryClientReferenceId}}"
+                  },
+                  {
+                    "key": "HouseholdClientReferenceId",
+                    "value": "{{navigation.HouseholdClientReferenceId}}"
+                  },
+                  {"key": "memberCount", "value": "{{navigation.memberCount}}"},
+                  {
+                    "key": "individualClientReferenceId",
+                    "value": "{{navigation.individualClientReferenceId}}"
+                  },
+                  {"key": "headName", "value": "{{navigation.headName}}"},
+                  {"key": "headGender", "value": "{{navigation.headGender}}"},
+                  {"key": "headDob", "value": "{{navigation.headDob}}"},
+                  {
+                    "key": "beneficiaryId",
+                    "value": "{{navigation.beneficiaryId}}"
                   },
                   {"key": "cycleIndex", "value": "{{navigation.cycleIndex}}"},
                   {"key": "doseIndex", "value": "{{navigation.doseIndex}}"},
@@ -2525,6 +2542,28 @@ final dynamic sampleFlows = {
                         "key": "ProjectBeneficiaryClientReferenceId",
                         "value":
                             "{{navigation.ProjectBeneficiaryClientReferenceId}}"
+                      },
+                      {
+                        "key": "HouseholdClientReferenceId",
+                        "value": "{{navigation.HouseholdClientReferenceId}}"
+                      },
+                      {
+                        "key": "memberCount",
+                        "value": "{{navigation.memberCount}}"
+                      },
+                      {
+                        "key": "individualClientReferenceId",
+                        "value": "{{navigation.individualClientReferenceId}}"
+                      },
+                      {"key": "headName", "value": "{{navigation.headName}}"},
+                      {
+                        "key": "headGender",
+                        "value": "{{navigation.headGender}}"
+                      },
+                      {"key": "headDob", "value": "{{navigation.headDob}}"},
+                      {
+                        "key": "beneficiaryId",
+                        "value": "{{navigation.beneficiaryId}}"
                       },
                       {
                         "key": "cycleIndex",
@@ -2854,6 +2893,7 @@ final dynamic sampleFlows = {
                 "key": "HouseholdClientReferenceId",
                 "value": "{{navigation.HouseholdClientReferenceId}}"
               },
+              {"key": "memberCount", "value": "{{navigation.memberCount}}"},
               {
                 "key": "individualClientReferenceId",
                 "value": "{{navigation.individualClientReferenceId}}"
@@ -2914,6 +2954,7 @@ final dynamic sampleFlows = {
                     "key": "HouseholdClientReferenceId",
                     "value": "{{navigation.HouseholdClientReferenceId}}"
                   },
+                  {"key": "memberCount", "value": "{{navigation.memberCount}}"},
                   {
                     "key": "individualClientReferenceId",
                     "value": "{{navigation.individualClientReferenceId}}"
@@ -4231,9 +4272,9 @@ final dynamic sampleFlows = {
                     "value": "{{navigation.HouseholdClientReferenceId}}"
                   },
                   {
-                    "key": "test0012",
+                    "key": "ProjectBeneficiaryClientReferenceId",
                     "value":
-                        "{{navigation.projectBeneficiaryClientReferenceId}}"
+                        "{{navigation.ProjectBeneficiaryClientReferenceId}}"
                   }
                 ],
                 "name": "householdOverview",
@@ -4304,7 +4345,7 @@ final dynamic sampleFlows = {
                         "{{contextData.entities.HouseholdModel.clientReferenceId}}"
                   },
                   {
-                    "key": "test0012",
+                    "key": "ProjectBeneficiaryClientReferenceId",
                     "value":
                         "{{contextData.entities.ProjectBeneficiaryModel.clientReferenceId}}"
                   }
