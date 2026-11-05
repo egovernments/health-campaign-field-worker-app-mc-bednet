@@ -127,6 +127,11 @@ _$HCMWrapperModelImpl _$$HCMWrapperModelImplFromJson(
       singleUserLogin: (json['SINGLE_USER_LOGIN'] as List<dynamic>)
           .map((e) => SingleUserLogin.fromJson(e as Map<String, dynamic>))
           .toList(),
+      dhDistributorValidation:
+          (json['DH_DISTRIBUTOR_VALIDATION'] as List<dynamic>?)
+              ?.map((e) =>
+                  DhDistributorValidation.fromJson(e as Map<String, dynamic>))
+              .toList(),
       idTypeOptions: (json['ID_TYPE_OPTIONS_POPULATOR'] as List<dynamic>)
           .map((e) => IdTypeOptions.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -202,6 +207,7 @@ Map<String, dynamic> _$$HCMWrapperModelImplToJson(
       'CHECKLIST_TYPES': instance.checklistTypes,
       'DEVICE_CHANGE_REASONS': instance.deviceChangeReasons,
       'SINGLE_USER_LOGIN': instance.singleUserLogin,
+      'DH_DISTRIBUTOR_VALIDATION': instance.dhDistributorValidation,
       'ID_TYPE_OPTIONS_POPULATOR': instance.idTypeOptions,
       'HOUSEHOLD_MEMBER_RELATIONSHIP_TYPES': instance.relationShipTypeOptions,
       'DELIVERY_COMMENT_OPTIONS_POPULATOR': instance.deliveryCommentOptions,
@@ -606,6 +612,20 @@ _$SingleUserLoginImpl _$$SingleUserLoginImplFromJson(
 
 Map<String, dynamic> _$$SingleUserLoginImplToJson(
         _$SingleUserLoginImpl instance) =>
+    <String, dynamic>{
+      'enabled': instance.enabled,
+      'id': instance.id,
+    };
+
+_$DhDistributorValidationImpl _$$DhDistributorValidationImplFromJson(
+        Map<String, dynamic> json) =>
+    _$DhDistributorValidationImpl(
+      enabled: json['enabled'] as bool,
+      id: (json['id'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$$DhDistributorValidationImplToJson(
+        _$DhDistributorValidationImpl instance) =>
     <String, dynamic>{
       'enabled': instance.enabled,
       'id': instance.id,

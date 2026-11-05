@@ -93,6 +93,9 @@ class AppConfiguration {
   @Name('SINGLE_USER_LOGIN')
   late List<SingleUserLogin>? singleUserLogin;
 
+  @Name('DH_DISTRIBUTOR_VALIDATION')
+  late List<DhDistributorValidation>? dhDistributorValidation;
+
   late List<ReferralReasons>? referralReasons;
   late List<ManualAttendanceReasons>? manualAttendanceReasons;
   late List<HouseStructureTypes>? houseStructureTypes;
@@ -237,6 +240,12 @@ class DeviceChangeReasons {
 
 @embedded
 class SingleUserLogin {
+  late bool enabled;
+  late int id;
+}
+
+@embedded
+class DhDistributorValidation {
   late bool enabled;
   late int id;
 }

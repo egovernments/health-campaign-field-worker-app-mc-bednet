@@ -88,6 +88,8 @@ class HCMWrapperModel with _$HCMWrapperModel {
     required List<DeviceChangeReasons> deviceChangeReasons,
     @JsonKey(name: 'SINGLE_USER_LOGIN')
     required List<SingleUserLogin> singleUserLogin,
+    @JsonKey(name: 'DH_DISTRIBUTOR_VALIDATION')
+    List<DhDistributorValidation>? dhDistributorValidation,
     @JsonKey(name: 'ID_TYPE_OPTIONS_POPULATOR')
     required List<IdTypeOptions> idTypeOptions,
     @JsonKey(name: 'HOUSEHOLD_MEMBER_RELATIONSHIP_TYPES')
@@ -431,6 +433,17 @@ class SingleUserLogin with _$SingleUserLogin {
 
   factory SingleUserLogin.fromJson(Map<String, dynamic> json) =>
       _$SingleUserLoginFromJson(json);
+}
+
+@freezed
+class DhDistributorValidation with _$DhDistributorValidation {
+  factory DhDistributorValidation({
+    required bool enabled,
+    required int id,
+  }) = _DhDistributorValidation;
+
+  factory DhDistributorValidation.fromJson(Map<String, dynamic> json) =>
+      _$DhDistributorValidationFromJson(json);
 }
 
 @freezed

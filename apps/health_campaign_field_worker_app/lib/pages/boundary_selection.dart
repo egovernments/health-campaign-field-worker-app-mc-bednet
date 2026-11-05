@@ -59,6 +59,19 @@ class _BoundarySelectionPageState
     BoundaryState boundaryState,
     BoundaryModel? selectedBoundary,
   ) async {
+    final isDhDistributorValidationEnabled = context
+            .read<AppInitializationBloc>()
+            .state
+            .maybeWhen(
+              initialized: (appConfiguration, _, __) =>
+                  appConfiguration.dhDistributorValidation?.any(
+                        (config) => config.enabled,
+                      ) ??
+                  true,
+              orElse: () => true,
+            );
+    if (!isDhDistributorValidationEnabled) return;
+
     final selectedProject = context.selectedProject;
     if (selectedProject.id.isEmpty) return;
 

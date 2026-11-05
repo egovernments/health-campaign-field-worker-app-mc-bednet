@@ -363,6 +363,10 @@ class _FormScreenWrapperState extends LocalizedState<_FormScreenWrapper> {
     String fieldName,
     String scannedValue,
   ) async {
+    if (!FlowBuilderSingleton().isDhDistributorValidationEnabled) {
+      return false;
+    }
+
     if (!_isDistributorScannerField(fieldName)) {
       return false;
     }

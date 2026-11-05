@@ -319,6 +319,15 @@ class MdmsRepository {
       return singleUserLogin;
     }).toList();
 
+    final List<DhDistributorValidation>? dhDistributorValidation =
+        element?.dhDistributorValidation?.map((element) {
+      final dhDistributorValidation = DhDistributorValidation()
+        ..enabled = element.enabled
+        ..id = element.id;
+
+      return dhDistributorValidation;
+    }).toList();
+
     final List<RelationShipTypeOptions>? relationShipTypes =
         element?.relationShipTypeOptions.map((element) {
       final relationShipOption = RelationShipTypeOptions()
@@ -397,6 +406,7 @@ class MdmsRepository {
     appConfiguration.bandwidthBatchSize = bandwidthBatchSize;
     appConfiguration.deviceChangeReasons = deviceChangeReasons;
     appConfiguration.singleUserLogin = singleUserLogin;
+    appConfiguration.dhDistributorValidation = dhDistributorValidation;
     appConfiguration.beneficiaryIdConfig = beneficiaryIdConfig;
     appConfiguration.downSyncBandwidthBatchSize = downSyncBandWidthBatchSize;
     appConfiguration.searchHouseHoldFilters =

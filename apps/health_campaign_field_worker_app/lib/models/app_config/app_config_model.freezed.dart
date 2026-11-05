@@ -961,6 +961,9 @@ mixin _$HCMWrapperModel {
   @JsonKey(name: 'SINGLE_USER_LOGIN')
   List<SingleUserLogin> get singleUserLogin =>
       throw _privateConstructorUsedError;
+  @JsonKey(name: 'DH_DISTRIBUTOR_VALIDATION')
+  List<DhDistributorValidation>? get dhDistributorValidation =>
+      throw _privateConstructorUsedError;
   @JsonKey(name: 'ID_TYPE_OPTIONS_POPULATOR')
   List<IdTypeOptions> get idTypeOptions => throw _privateConstructorUsedError;
   @JsonKey(name: 'HOUSEHOLD_MEMBER_RELATIONSHIP_TYPES')
@@ -1038,6 +1041,8 @@ abstract class $HCMWrapperModelCopyWith<$Res> {
       @JsonKey(name: 'DEVICE_CHANGE_REASONS')
       List<DeviceChangeReasons> deviceChangeReasons,
       @JsonKey(name: 'SINGLE_USER_LOGIN') List<SingleUserLogin> singleUserLogin,
+      @JsonKey(name: 'DH_DISTRIBUTOR_VALIDATION')
+      List<DhDistributorValidation>? dhDistributorValidation,
       @JsonKey(name: 'ID_TYPE_OPTIONS_POPULATOR')
       List<IdTypeOptions> idTypeOptions,
       @JsonKey(name: 'HOUSEHOLD_MEMBER_RELATIONSHIP_TYPES')
@@ -1090,6 +1095,7 @@ class _$HCMWrapperModelCopyWithImpl<$Res, $Val extends HCMWrapperModel>
     Object? checklistTypes = null,
     Object? deviceChangeReasons = null,
     Object? singleUserLogin = null,
+    Object? dhDistributorValidation = freezed,
     Object? idTypeOptions = null,
     Object? relationShipTypeOptions = null,
     Object? deliveryCommentOptions = null,
@@ -1149,6 +1155,10 @@ class _$HCMWrapperModelCopyWithImpl<$Res, $Val extends HCMWrapperModel>
           ? _value.singleUserLogin
           : singleUserLogin // ignore: cast_nullable_to_non_nullable
               as List<SingleUserLogin>,
+      dhDistributorValidation: freezed == dhDistributorValidation
+          ? _value.dhDistributorValidation
+          : dhDistributorValidation // ignore: cast_nullable_to_non_nullable
+              as List<DhDistributorValidation>?,
       idTypeOptions: null == idTypeOptions
           ? _value.idTypeOptions
           : idTypeOptions // ignore: cast_nullable_to_non_nullable
@@ -1243,6 +1253,8 @@ abstract class _$$HCMWrapperModelImplCopyWith<$Res>
       @JsonKey(name: 'DEVICE_CHANGE_REASONS')
       List<DeviceChangeReasons> deviceChangeReasons,
       @JsonKey(name: 'SINGLE_USER_LOGIN') List<SingleUserLogin> singleUserLogin,
+      @JsonKey(name: 'DH_DISTRIBUTOR_VALIDATION')
+      List<DhDistributorValidation>? dhDistributorValidation,
       @JsonKey(name: 'ID_TYPE_OPTIONS_POPULATOR')
       List<IdTypeOptions> idTypeOptions,
       @JsonKey(name: 'HOUSEHOLD_MEMBER_RELATIONSHIP_TYPES')
@@ -1293,6 +1305,7 @@ class __$$HCMWrapperModelImplCopyWithImpl<$Res>
     Object? checklistTypes = null,
     Object? deviceChangeReasons = null,
     Object? singleUserLogin = null,
+    Object? dhDistributorValidation = freezed,
     Object? idTypeOptions = null,
     Object? relationShipTypeOptions = null,
     Object? deliveryCommentOptions = null,
@@ -1352,6 +1365,10 @@ class __$$HCMWrapperModelImplCopyWithImpl<$Res>
           ? _value._singleUserLogin
           : singleUserLogin // ignore: cast_nullable_to_non_nullable
               as List<SingleUserLogin>,
+      dhDistributorValidation: freezed == dhDistributorValidation
+          ? _value._dhDistributorValidation
+          : dhDistributorValidation // ignore: cast_nullable_to_non_nullable
+              as List<DhDistributorValidation>?,
       idTypeOptions: null == idTypeOptions
           ? _value._idTypeOptions
           : idTypeOptions // ignore: cast_nullable_to_non_nullable
@@ -1444,6 +1461,8 @@ class _$HCMWrapperModelImpl implements _HCMWrapperModel {
       required final List<DeviceChangeReasons> deviceChangeReasons,
       @JsonKey(name: 'SINGLE_USER_LOGIN')
       required final List<SingleUserLogin> singleUserLogin,
+      @JsonKey(name: 'DH_DISTRIBUTOR_VALIDATION')
+      final List<DhDistributorValidation>? dhDistributorValidation,
       @JsonKey(name: 'ID_TYPE_OPTIONS_POPULATOR')
       required final List<IdTypeOptions> idTypeOptions,
       @JsonKey(name: 'HOUSEHOLD_MEMBER_RELATIONSHIP_TYPES')
@@ -1487,6 +1506,7 @@ class _$HCMWrapperModelImpl implements _HCMWrapperModel {
         _checklistTypes = checklistTypes,
         _deviceChangeReasons = deviceChangeReasons,
         _singleUserLogin = singleUserLogin,
+        _dhDistributorValidation = dhDistributorValidation,
         _idTypeOptions = idTypeOptions,
         _relationShipTypeOptions = relationShipTypeOptions,
         _deliveryCommentOptions = deliveryCommentOptions,
@@ -1604,6 +1624,18 @@ class _$HCMWrapperModelImpl implements _HCMWrapperModel {
     if (_singleUserLogin is EqualUnmodifiableListView) return _singleUserLogin;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_singleUserLogin);
+  }
+
+  final List<DhDistributorValidation>? _dhDistributorValidation;
+  @override
+  @JsonKey(name: 'DH_DISTRIBUTOR_VALIDATION')
+  List<DhDistributorValidation>? get dhDistributorValidation {
+    final value = _dhDistributorValidation;
+    if (value == null) return null;
+    if (_dhDistributorValidation is EqualUnmodifiableListView)
+      return _dhDistributorValidation;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
   }
 
   final List<IdTypeOptions> _idTypeOptions;
@@ -1785,7 +1817,7 @@ class _$HCMWrapperModelImpl implements _HCMWrapperModel {
 
   @override
   String toString() {
-    return 'HCMWrapperModel(appConfig: $appConfig, bandWidthBatchSize: $bandWidthBatchSize, beneficiaryIdConfig: $beneficiaryIdConfig, downSyncBandWidthBatchSize: $downSyncBandWidthBatchSize, householdDeletionReasonOptions: $householdDeletionReasonOptions, householdMemberDeletionReasonOptions: $householdMemberDeletionReasonOptions, backgroundServiceConfig: $backgroundServiceConfig, checklistTypes: $checklistTypes, deviceChangeReasons: $deviceChangeReasons, singleUserLogin: $singleUserLogin, idTypeOptions: $idTypeOptions, relationShipTypeOptions: $relationShipTypeOptions, deliveryCommentOptions: $deliveryCommentOptions, backendInterface: $backendInterface, callSupportOptions: $callSupportOptions, transportTypes: $transportTypes, symptomsTypeList: $symptomsTypeList, searchHouseHoldFilters: $searchHouseHoldFilters, searchCLFFilters: $searchCLFFilters, referralReasonList: $referralReasonList, manualAttendanceReasonList: $manualAttendanceReasonList, houseStructureTypes: $houseStructureTypes, refusalReasons: $refusalReasons, firebaseConfig: $firebaseConfig, transitPostType: $transitPostType, facilityBoundaryRelationship: $facilityBoundaryRelationship)';
+    return 'HCMWrapperModel(appConfig: $appConfig, bandWidthBatchSize: $bandWidthBatchSize, beneficiaryIdConfig: $beneficiaryIdConfig, downSyncBandWidthBatchSize: $downSyncBandWidthBatchSize, householdDeletionReasonOptions: $householdDeletionReasonOptions, householdMemberDeletionReasonOptions: $householdMemberDeletionReasonOptions, backgroundServiceConfig: $backgroundServiceConfig, checklistTypes: $checklistTypes, deviceChangeReasons: $deviceChangeReasons, singleUserLogin: $singleUserLogin, dhDistributorValidation: $dhDistributorValidation, idTypeOptions: $idTypeOptions, relationShipTypeOptions: $relationShipTypeOptions, deliveryCommentOptions: $deliveryCommentOptions, backendInterface: $backendInterface, callSupportOptions: $callSupportOptions, transportTypes: $transportTypes, symptomsTypeList: $symptomsTypeList, searchHouseHoldFilters: $searchHouseHoldFilters, searchCLFFilters: $searchCLFFilters, referralReasonList: $referralReasonList, manualAttendanceReasonList: $manualAttendanceReasonList, houseStructureTypes: $houseStructureTypes, refusalReasons: $refusalReasons, firebaseConfig: $firebaseConfig, transitPostType: $transitPostType, facilityBoundaryRelationship: $facilityBoundaryRelationship)';
   }
 
   @override
@@ -1816,6 +1848,8 @@ class _$HCMWrapperModelImpl implements _HCMWrapperModel {
                 .equals(other._deviceChangeReasons, _deviceChangeReasons) &&
             const DeepCollectionEquality()
                 .equals(other._singleUserLogin, _singleUserLogin) &&
+            const DeepCollectionEquality().equals(
+                other._dhDistributorValidation, _dhDistributorValidation) &&
             const DeepCollectionEquality()
                 .equals(other._idTypeOptions, _idTypeOptions) &&
             const DeepCollectionEquality().equals(
@@ -1867,6 +1901,7 @@ class _$HCMWrapperModelImpl implements _HCMWrapperModel {
         const DeepCollectionEquality().hash(_checklistTypes),
         const DeepCollectionEquality().hash(_deviceChangeReasons),
         const DeepCollectionEquality().hash(_singleUserLogin),
+        const DeepCollectionEquality().hash(_dhDistributorValidation),
         const DeepCollectionEquality().hash(_idTypeOptions),
         const DeepCollectionEquality().hash(_relationShipTypeOptions),
         const DeepCollectionEquality().hash(_deliveryCommentOptions),
@@ -1922,6 +1957,8 @@ abstract class _HCMWrapperModel implements HCMWrapperModel {
       required final List<DeviceChangeReasons> deviceChangeReasons,
       @JsonKey(name: 'SINGLE_USER_LOGIN')
       required final List<SingleUserLogin> singleUserLogin,
+      @JsonKey(name: 'DH_DISTRIBUTOR_VALIDATION')
+      final List<DhDistributorValidation>? dhDistributorValidation,
       @JsonKey(name: 'ID_TYPE_OPTIONS_POPULATOR')
       required final List<IdTypeOptions> idTypeOptions,
       @JsonKey(name: 'HOUSEHOLD_MEMBER_RELATIONSHIP_TYPES')
@@ -1989,6 +2026,9 @@ abstract class _HCMWrapperModel implements HCMWrapperModel {
   @override
   @JsonKey(name: 'SINGLE_USER_LOGIN')
   List<SingleUserLogin> get singleUserLogin;
+  @override
+  @JsonKey(name: 'DH_DISTRIBUTOR_VALIDATION')
+  List<DhDistributorValidation>? get dhDistributorValidation;
   @override
   @JsonKey(name: 'ID_TYPE_OPTIONS_POPULATOR')
   List<IdTypeOptions> get idTypeOptions;
@@ -6612,6 +6652,166 @@ abstract class _SingleUserLogin implements SingleUserLogin {
   @JsonKey(ignore: true)
   _$$SingleUserLoginImplCopyWith<_$SingleUserLoginImpl> get copyWith =>
       throw _privateConstructorUsedError;
+}
+
+DhDistributorValidation _$DhDistributorValidationFromJson(
+    Map<String, dynamic> json) {
+  return _DhDistributorValidation.fromJson(json);
+}
+
+/// @nodoc
+mixin _$DhDistributorValidation {
+  bool get enabled => throw _privateConstructorUsedError;
+  int get id => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $DhDistributorValidationCopyWith<DhDistributorValidation> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $DhDistributorValidationCopyWith<$Res> {
+  factory $DhDistributorValidationCopyWith(DhDistributorValidation value,
+          $Res Function(DhDistributorValidation) then) =
+      _$DhDistributorValidationCopyWithImpl<$Res, DhDistributorValidation>;
+  @useResult
+  $Res call({bool enabled, int id});
+}
+
+/// @nodoc
+class _$DhDistributorValidationCopyWithImpl<$Res,
+        $Val extends DhDistributorValidation>
+    implements $DhDistributorValidationCopyWith<$Res> {
+  _$DhDistributorValidationCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? enabled = null,
+    Object? id = null,
+  }) {
+    return _then(_value.copyWith(
+      enabled: null == enabled
+          ? _value.enabled
+          : enabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$DhDistributorValidationImplCopyWith<$Res>
+    implements $DhDistributorValidationCopyWith<$Res> {
+  factory _$$DhDistributorValidationImplCopyWith(
+          _$DhDistributorValidationImpl value,
+          $Res Function(_$DhDistributorValidationImpl) then) =
+      __$$DhDistributorValidationImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({bool enabled, int id});
+}
+
+/// @nodoc
+class __$$DhDistributorValidationImplCopyWithImpl<$Res>
+    extends _$DhDistributorValidationCopyWithImpl<$Res,
+        _$DhDistributorValidationImpl>
+    implements _$$DhDistributorValidationImplCopyWith<$Res> {
+  __$$DhDistributorValidationImplCopyWithImpl(
+      _$DhDistributorValidationImpl _value,
+      $Res Function(_$DhDistributorValidationImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? enabled = null,
+    Object? id = null,
+  }) {
+    return _then(_$DhDistributorValidationImpl(
+      enabled: null == enabled
+          ? _value.enabled
+          : enabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$DhDistributorValidationImpl implements _DhDistributorValidation {
+  _$DhDistributorValidationImpl({required this.enabled, required this.id});
+
+  factory _$DhDistributorValidationImpl.fromJson(Map<String, dynamic> json) =>
+      _$$DhDistributorValidationImplFromJson(json);
+
+  @override
+  final bool enabled;
+  @override
+  final int id;
+
+  @override
+  String toString() {
+    return 'DhDistributorValidation(enabled: $enabled, id: $id)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$DhDistributorValidationImpl &&
+            (identical(other.enabled, enabled) || other.enabled == enabled) &&
+            (identical(other.id, id) || other.id == id));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, enabled, id);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$DhDistributorValidationImplCopyWith<_$DhDistributorValidationImpl>
+      get copyWith => __$$DhDistributorValidationImplCopyWithImpl<
+          _$DhDistributorValidationImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$DhDistributorValidationImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _DhDistributorValidation implements DhDistributorValidation {
+  factory _DhDistributorValidation(
+      {required final bool enabled,
+      required final int id}) = _$DhDistributorValidationImpl;
+
+  factory _DhDistributorValidation.fromJson(Map<String, dynamic> json) =
+      _$DhDistributorValidationImpl.fromJson;
+
+  @override
+  bool get enabled;
+  @override
+  int get id;
+  @override
+  @JsonKey(ignore: true)
+  _$$DhDistributorValidationImplCopyWith<_$DhDistributorValidationImpl>
+      get copyWith => throw _privateConstructorUsedError;
 }
 
 TransportTypes _$TransportTypesFromJson(Map<String, dynamic> json) {

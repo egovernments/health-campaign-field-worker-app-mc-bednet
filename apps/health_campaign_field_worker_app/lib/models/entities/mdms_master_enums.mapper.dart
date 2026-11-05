@@ -87,6 +87,8 @@ class MasterEnumsMapper extends EnumMapper<MasterEnums> {
         return MasterEnums.deviceChangeReasons;
       case "SINGLE_USER_LOGIN":
         return MasterEnums.singleUserLogin;
+      case "DH_DISTRIBUTOR_VALIDATION":
+        return MasterEnums.dhDistributorValidation;
       case "BOUNDARY_RELATIONSHIP":
         return MasterEnums.boundaryRelationShip;
       case "FACE_AUTH_CONFIG":
@@ -163,6 +165,8 @@ class MasterEnumsMapper extends EnumMapper<MasterEnums> {
         return "DEVICE_CHANGE_REASONS";
       case MasterEnums.singleUserLogin:
         return "SINGLE_USER_LOGIN";
+      case MasterEnums.dhDistributorValidation:
+        return "DH_DISTRIBUTOR_VALIDATION";
       case MasterEnums.boundaryRelationShip:
         return "BOUNDARY_RELATIONSHIP";
       case MasterEnums.faceAuthConfig:

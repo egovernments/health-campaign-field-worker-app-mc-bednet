@@ -114,6 +114,7 @@ class AppInitializationBloc
                     MasterEnums.facilityBoundaryRelationShip.toValue(),
                     MasterEnums.deviceChangeReasons.toValue(),
                     MasterEnums.singleUserLogin.toValue(),
+                    MasterEnums.dhDistributorValidation.toValue(),
                     MasterEnums.faceAuthConfig.toValue(),
                   ]),
                 ),

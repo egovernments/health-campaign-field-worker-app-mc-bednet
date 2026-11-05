@@ -3957,6 +3957,11 @@ void setPackagesSingleton(BuildContext context) {
         FlowBuilderSingleton().setInitialData(
           beneficiaryIdMinCount:
               appConfiguration.beneficiaryIdConfig?.first.minCount.toInt(),
+          isDhDistributorValidationEnabled:
+              appConfiguration.dhDistributorValidation?.any(
+                    (config) => config.enabled,
+                  ) ??
+                  true,
           loggedInUser: context.loggedInUserModel,
           loggedInUserUuid: context.loggedInUserUuid,
           maxRadius: appConfiguration.maxRadius!,

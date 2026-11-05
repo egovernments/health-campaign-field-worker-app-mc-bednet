@@ -67,6 +67,8 @@ enum MasterEnums {
   deviceChangeReasons,
   @MappableValue("SINGLE_USER_LOGIN")
   singleUserLogin,
+  @MappableValue("DH_DISTRIBUTOR_VALIDATION")
+  dhDistributorValidation,
   @MappableValue("BOUNDARY_RELATIONSHIP")
   boundaryRelationShip,
   @MappableValue("FACE_AUTH_CONFIG")

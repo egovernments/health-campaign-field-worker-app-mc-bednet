@@ -36,6 +36,7 @@ class FlowBuilderSingleton {
   List<Map<String, dynamic>>?
       _userRoles; // User roles from app level (e.g., [{"code": "WAREHOUSE_MANAGER", "name": "Warehouse Manager"}])
   int? _beneficiaryIdMinCount;
+  bool _isDhDistributorValidationEnabled = true;
 
   void setBoundary({required BoundaryModel boundary}) {
     _boundaryModel = boundary;
@@ -60,6 +61,7 @@ class FlowBuilderSingleton {
     required UserModel? loggedInUser,
     List<Map<String, dynamic>>? userRoles,
     int? beneficiaryIdMinCount,
+    bool isDhDistributorValidationEnabled = true,
   }) {
     _loggedInUserUuid = loggedInUserUuid;
     _maxRadius = maxRadius;
@@ -70,6 +72,7 @@ class FlowBuilderSingleton {
     _loggedInUser = loggedInUser;
     _userRoles = userRoles;
     _beneficiaryIdMinCount = beneficiaryIdMinCount;
+    _isDhDistributorValidationEnabled = isDhDistributorValidationEnabled;
   }
 
   void setUserRoles(List<Map<String, dynamic>>? userRoles) {
@@ -112,6 +115,9 @@ class FlowBuilderSingleton {
   List<Map<String, dynamic>>? get userRoles => _userRoles;
 
   int? get beneficiaryIdMinCount => _beneficiaryIdMinCount;
+
+  bool get isDhDistributorValidationEnabled =>
+      _isDhDistributorValidationEnabled;
 }
 
 /// TODO: WILL REMOVE THIS FUNCTION ALSO : TEMPORARY
