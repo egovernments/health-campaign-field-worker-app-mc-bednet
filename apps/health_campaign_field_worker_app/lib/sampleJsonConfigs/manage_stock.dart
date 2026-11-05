@@ -643,7 +643,6 @@ final dynamic sampleInventoryFlows = {
                       "APPONE_MANAGESTOCK_WAREHOUSE_label_isGS1Code_message"
                 },
                 {"type": "allowManualEntry", "value": false},
-                {"type": "skipDhDistributorValidation", "value": false},
                 {
                   "type": "pattern",
                   "value":
@@ -785,7 +784,6 @@ final dynamic sampleInventoryFlows = {
                       "APPONE_MANAGESTOCK_WAREHOUSE_label_isGS1Code_message"
                 },
                 {"type": "allowManualEntry", "value": false},
-                {"type": "skipDhDistributorValidation", "value": false},
                 {
                   "type": "pattern",
                   "value":
