@@ -507,6 +507,7 @@ final jsonConfig = {
             "ageInMonths": "__context:ageInMonths",
             "gender": "__context:gender",
             "headName": "__context:headName",
+            "lastName": "__context:lastName",
             "headGender": "__context:headGender",
             "headDob": "__context:headDob",
             "headMobileNumber": "__context:headMobileNumber",
@@ -608,6 +609,7 @@ final jsonConfig = {
             "ageInMonths": "__context:ageInMonths",
             "gender": "__context:gender",
             "headName": "__context:headName",
+            "lastName": "__context:lastName",
             "headGender": "__context:headGender",
             "headDob": "__context:headDob",
             "headMobileNumber": "__context:headMobileNumber",
@@ -704,6 +706,7 @@ final jsonConfig = {
             "ageInMonths": "__context:ageInMonths",
             "gender": "__context:gender",
             "headName": "__context:headName",
+            "lastName": "__context:lastName",
             "headGender": "__context:headGender",
             "headDob": "__context:headDob",
             "headMobileNumber": "__context:headMobileNumber",
@@ -780,6 +783,7 @@ final jsonConfig = {
             "ageInMonths": "__context:ageInMonths",
             "gender": "__context:gender",
             "headName": "__context:headName",
+            "lastName": "__context:lastName",
             "headGender": "__context:headGender",
             "headDob": "__context:headDob",
             "headMobileNumber": "__context:headMobileNumber",
@@ -859,6 +863,7 @@ final jsonConfig = {
             "ageInMonths": "__context:ageInMonths",
             "gender": "__context:gender",
             "headName": "__context:headName",
+            "lastName": "__context:lastName",
             "headGender": "__context:headGender",
             "headDob": "__context:headDob",
             "headMobileNumber": "__context:headMobileNumber",
@@ -1406,8 +1411,12 @@ final jsonConfig = {
             "clientAuditDetails": "__generate:clientAudit",
             "auditDetails": "__generate:audit"
           },
-          // No form fills `additionalInfo.fields`; the stamp is the only extra.
-          "additionalFields": {"cycleIndexStamp": "__context:cycleIndexStamp"},
+          // Persist close-household head details on task payload.
+          "additionalFields": {
+            "headName": "__context:headName",
+            "lastName": "__context:lastName",
+            "cycleIndexStamp": "__context:cycleIndexStamp"
+          },
           "clientAuditDetails": "__generate:clientAudit",
           "auditDetails": "__generate:audit"
         }

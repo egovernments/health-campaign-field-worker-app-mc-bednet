@@ -138,6 +138,11 @@ class Variables {
     'en_BEDNET',
   );
 
+  static const _faceAuthEnabled = EnvEntry(
+    'FACE_AUTH_ENABLED',
+    'false',
+  );
+
   const Variables({
     this.useFallbackValues = false,
     required DotEnv dotEnv,
@@ -240,6 +245,18 @@ class Variables {
         ? fallbackLocale
         : _dotEnv.get(_defaultLocale.key, fallback: fallbackLocale);
   }
+
+  bool get isFaceAuthEnabled {
+    final raw = (useFallbackValues
+            ? _faceAuthEnabled.value
+            : _dotEnv.get(_faceAuthEnabled.key, fallback: _faceAuthEnabled.value))
+        .trim()
+        .toLowerCase();
+
+    return raw == 'true' || raw == '1';
+  }
+
+  bool get faceAuthEnabled => isFaceAuthEnabled;
 }
 
 class EnvEntry {

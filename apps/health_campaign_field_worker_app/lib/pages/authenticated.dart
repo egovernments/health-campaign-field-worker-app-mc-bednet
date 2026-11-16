@@ -654,7 +654,38 @@ class _AuthenticatedPageWrapperState extends State<AuthenticatedPageWrapper>
                             },
                           )
                         : const SizedBox.shrink(),
-                    actions: null,
+                    actions: [
+                      if (FaceAuthFeatureFlag.enabled)
+                        IgnorePointer(
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              right: envConfig.variables.envType != EnvType.prod
+                                  ? 52.0
+                                  : 12.0,
+                            ),
+                            child: Center(
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: theme.colorTheme.paper.primary
+                                      .withOpacity(0.16),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: theme.colorTheme.paper.primary
+                                        .withOpacity(0.35),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.face_rounded,
+                                  size: 20,
+                                  color: theme.colorTheme.paper.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   drawer: showDrawer ? drawerWidget(context) : null,
                   body: MultiRepositoryProvider(

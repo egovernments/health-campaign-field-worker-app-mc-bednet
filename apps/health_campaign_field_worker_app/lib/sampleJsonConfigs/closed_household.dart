@@ -348,6 +348,15 @@ final dynamic sampleCloseHouseholdFlows = {
                       {
                         "key": "latestBeneficiaryId",
                         "value": "{{latestBeneficiaryId}}"
+                      },
+                      {
+                        "key": "headName",
+                        "value": "{{formData.closeHouseholdDetails.headName}}"
+                      },
+                      {
+                        "key": "lastName",
+                        "value":
+                            "{{formData.closeHouseholdDetails.familyname}}"
                       }
                     ],
                     "onError": [
@@ -481,6 +490,15 @@ final dynamic sampleCloseHouseholdFlows = {
                   {
                     "key": "latestBeneficiaryId",
                     "value": "{{latestBeneficiaryId}}"
+                  },
+                  {
+                    "key": "headName",
+                    "value": "{{formData.closeHouseholdDetails.headName}}"
+                  },
+                  {
+                    "key": "lastName",
+                    "value":
+                        "{{formData.closeHouseholdDetails.familyname}}"
                   }
                 ],
                 "onError": [
