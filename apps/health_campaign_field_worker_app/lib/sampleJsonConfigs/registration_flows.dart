@@ -80,7 +80,7 @@ final dynamic sampleFlows = {
                 "properties": {
                   "name": "searchBeneficiary",
                   "type": "TEMPLATE",
-                  "navigationMode": "popUntilAndPush",
+                  "navigationMode": "popUntilAndReplace",
                   "popUntilPageName": "searchBeneficiary"
                 }
               }
@@ -102,7 +102,7 @@ final dynamic sampleFlows = {
           "properties": {
             "name": "searchBeneficiary",
             "type": "TEMPLATE",
-            "navigationMode": "popUntilAndPush",
+            "navigationMode": "popUntilAndReplace",
             "popUntilPageName": "searchBeneficiary"
           }
         }
@@ -124,7 +124,7 @@ final dynamic sampleFlows = {
                 ],
                 "name": "searchBeneficiary",
                 "type": "TEMPLATE",
-                "navigationMode": "popUntilAndPush",
+                "navigationMode": "popUntilAndReplace",
                 "popUntilPageName": "searchBeneficiary"
               }
             }
@@ -2046,6 +2046,12 @@ final dynamic sampleFlows = {
               "properties": {"name": "HOME", "type": "HOME"}
             }
           ]
+        }
+      ],
+      "onSystemBack": [
+        {
+          "actionType": "BACK_NAVIGATION",
+          "properties": {"name": "HOME", "type": "HOME"}
         }
       ],
       "heading": "REGISTRATION_SEARCH_HOUSEHOLD_HEADING",
@@ -4343,7 +4349,6 @@ final dynamic sampleFlows = {
               "actionType": "UPDATE_IDENTIFIER_STATUS",
               "properties": {
                 "identifierType": "UNIQUE_BENEFICIARY_ID",
-                "mode": "edit",
                 "onError": [
                   {
                     "actionType": "SHOW_TOAST",
