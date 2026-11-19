@@ -7,8 +7,12 @@ import 'package:flutter/foundation.dart';
 export './crash_button.dart';
 
 Future initializeFirebaseCore({
-  required FirebaseOptions options,
+  FirebaseOptions? options,
 }) async {
+  if (options == null) {
+    await Firebase.initializeApp();
+    return;
+  }
   await Firebase.initializeApp(options: options);
 }
 

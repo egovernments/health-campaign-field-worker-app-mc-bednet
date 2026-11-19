@@ -42,7 +42,7 @@ class _LoginPageState extends LocalizedState<LoginPage> {
   bool _localizationReady = false;
   static const _userId = 'userId';
   static const _password = 'password';
-  static const _debugUserId = 'USR-152090';
+  static const _debugUserId = 'AbaN-Mdt-REC-Trn-01';
   static const _debugPassword = 'eGov@123';
 
   String? _pendingUserId;

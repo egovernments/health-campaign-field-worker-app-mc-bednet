@@ -54,19 +54,18 @@ class _BoundarySelectionPageState
   late final String setLocale = AppSharedPreferences().getSelectedLocale ??
       envConfig.variables.defaultLocale;
   bool doFilter = false;
+  String _lastBoundaryLocalizationKey = '';
 
   Future<void> _syncDhDistributorsIfRequired(
     BoundaryState boundaryState,
     BoundaryModel? selectedBoundary,
   ) async {
-    final isDhDistributorValidationEnabled = context
-            .read<AppInitializationBloc>()
-            .state
-            .maybeWhen(
+    final isDhDistributorValidationEnabled =
+        context.read<AppInitializationBloc>().state.maybeWhen(
               initialized: (appConfiguration, _, __) =>
                   appConfiguration.dhDistributorValidation?.any(
-                        (config) => config.enabled,
-                      ) ??
+                    (config) => config.enabled,
+                  ) ??
                   true,
               orElse: () => true,
             );
@@ -200,35 +199,34 @@ class _BoundarySelectionPageState
                     initialized: (appConfiguration, _, __) =>
                         BlocListener<BoundaryBloc, BoundaryState>(
                       listener: (context, state) {
-                        if (state.boundaryList.isNotEmpty) {
-                          final finalCodes =
-                              state.boundaryList.map((e) => e.code!).toList();
-
-                          final labelCodeList = state.selectedBoundaryMap.keys
-                              .map((key) => '${runtimeHierarchyType()}_$key')
-                              .toList();
-
-                          final combinedCodes = [
-                            ...finalCodes,
-                            ...labelCodeList,
-                            i18.common.coreCommonSubmit,
-                            i18.common.maxBoundarySelectionReached
-                          ];
-
-                          LocalizationParams().setCode(combinedCodes);
-                          context.read<LocalizationBloc>().add(
-                              LocalizationEvent.onUpdateLocalizationIndex(
-                                  index: appConfiguration.languages!.indexWhere(
-                                      (element) =>
-                                          element.value ==
-                                          AppSharedPreferences()
-                                              .getSelectedLocale),
-                                  code: setLocale));
-                        }
+                        _refreshBoundaryLocalizationIfRequired(
+                          boundaryState: state,
+                          appConfiguration: appConfiguration,
+                        );
                       },
                       child: ReactiveFormBuilder(
                         form: () => buildForm(state, appConfiguration),
-                        builder: (context, form, child) => ScrollableContent(
+                        builder: (context, form, child) {
+                          final filteredItemsByLabel =
+                              _buildFilteredItemsByLabel(
+                            state: state,
+                            labelList: labelList,
+                          );
+                          final dropdownItemsByLabel =
+                              _buildDropdownItemsByLabel(
+                            filteredItemsByLabel: filteredItemsByLabel,
+                          );
+                          final boundaryByCodeByLabel =
+                              _buildBoundaryCodeIndexByLabel(
+                            filteredItemsByLabel: filteredItemsByLabel,
+                          );
+                          final selectedLastLevelCodes = state
+                              .selectedLastLevelBoundaries
+                              .map((e) => e.code)
+                              .whereType<String>()
+                              .toSet();
+
+                          return ScrollableContent(
                             footer: BlocListener<BeneficiaryDownSyncBloc,
                                 BeneficiaryDownSyncState>(
                               listener: (context, downSyncState) {
@@ -687,13 +685,17 @@ class _BoundarySelectionPageState
                                                       const BoundarySubmitEvent(),
                                                     );
 
-                                                await _syncDhDistributorsIfRequired(
+                                                final syncDhFuture =
+                                                    _syncDhDistributorsIfRequired(
                                                   state,
                                                   selectedBoundary?.value,
                                                 );
+                                                final isOnlineFuture =
+                                                    getIsConnected();
 
-                                                bool isOnline =
-                                                    await getIsConnected();
+                                                await syncDhFuture;
+                                                final isOnline =
+                                                    await isOnlineFuture;
 
                                                 if (context.mounted) {
                                                   if (isOnline &&
@@ -803,28 +805,9 @@ class _BoundarySelectionPageState
                                         final label =
                                             labelList.elementAt(labelIndex);
 
-                                        final filteredItems =
-                                            state.boundaryList.where((element) {
-                                          if (element.label != label)
-                                            return false;
-                                          if (labelIndex == 0) return true;
-                                          final parentIndex = labelIndex - 1;
-
-                                          final parentBoundaryEntry = state
-                                              .selectedBoundaryMap.entries
-                                              .elementAtOrNull(parentIndex);
-                                          final parentBoundary =
-                                              parentBoundaryEntry?.value;
-                                          if (parentBoundary == null)
-                                            return false;
-
-                                          if (element.materializedPathList
-                                              .contains(parentBoundary.code)) {
-                                            return true;
-                                          }
-
-                                          return false;
-                                        }).toList();
+                                        final dropdownItems =
+                                            dropdownItemsByLabel[label] ??
+                                                const <DropdownItem>[];
 
                                         final isLastLevel =
                                             labelIndex == labelList.length - 1;
@@ -885,46 +868,25 @@ class _BoundarySelectionPageState
                                                                   .corecommonRequired,
                                                             )
                                                           : null,
-                                                      options: filteredItems
-                                                          .map(
-                                                              (e) =>
-                                                                  DropdownItem(
-                                                                    name: localizations.translate(
-                                                                        e.code ??
-                                                                            'No Value'),
-                                                                    code:
-                                                                        e.code ??
-                                                                            '',
-                                                                  ))
+                                                      options: dropdownItems,
+                                                      initialOptions: dropdownItems
+                                                          .where((item) =>
+                                                              selectedLastLevelCodes
+                                                                  .contains(item
+                                                                      .code))
                                                           .toList(),
-                                                      initialOptions:
-                                                          filteredItems
-                                                              .where((e) => state
-                                                                  .selectedLastLevelBoundaries
-                                                                  .any((s) =>
-                                                                      s.code ==
-                                                                      e.code))
-                                                              .map((e) =>
-                                                                  DropdownItem(
-                                                                    name: localizations.translate(
-                                                                        e.code ??
-                                                                            'No Value'),
-                                                                    code:
-                                                                        e.code ??
-                                                                            '',
-                                                                  ))
-                                                              .toList(),
                                                       onOptionSelected:
                                                           (selectedValues) {
+                                                        final boundaryByCode =
+                                                            boundaryByCodeByLabel[
+                                                                    label] ??
+                                                                const <String,
+                                                                    BoundaryModel>{};
                                                         final boundaries =
                                                             selectedValues
                                                                 .map((v) =>
-                                                                    filteredItems
-                                                                        .firstWhere(
-                                                                      (b) =>
-                                                                          b.code ==
-                                                                          v.code,
-                                                                    ))
+                                                                    boundaryByCode[
+                                                                        v.code]!)
                                                                 .toList();
 
                                                         if (labelIndex == 0) {
@@ -967,22 +929,14 @@ class _BoundarySelectionPageState
                                                               null,
                                                       sentenceCaseEnabled:
                                                           false,
-                                                      items: filteredItems
-                                                          .map((e) => DropdownItem(
-                                                              name: localizations
-                                                                  .translate(e
-                                                                          .code ??
-                                                                      'No Value'),
-                                                              code:
-                                                                  e.code ?? ''))
-                                                          .toList(),
+                                                      items: dropdownItems,
                                                       onSelect: (value) {
                                                         final selectedBoundary =
-                                                            filteredItems.firstWhere(
-                                                                (boundary) =>
-                                                                    boundary
-                                                                        .code ==
-                                                                    value.code);
+                                                            (boundaryByCodeByLabel[
+                                                                    label] ??
+                                                                const <String,
+                                                                    BoundaryModel>{})[value
+                                                                .code]!;
 
                                                         final displayValue =
                                                             localizations
@@ -1010,6 +964,16 @@ class _BoundarySelectionPageState
                                                             .read<
                                                                 BoundaryBloc>()
                                                             .add(
+                                                              BoundarySelectEvent(
+                                                                label: label,
+                                                                selectedBoundary:
+                                                                    selectedBoundary,
+                                                              ),
+                                                            );
+                                                        context
+                                                            .read<
+                                                                BoundaryBloc>()
+                                                            .add(
                                                               BoundarySearchEvent(
                                                                 boundaryNum:
                                                                     (selectedBoundary)
@@ -1017,17 +981,6 @@ class _BoundarySelectionPageState
                                                                 code:
                                                                     (selectedBoundary)
                                                                         .code!,
-                                                              ),
-                                                            );
-
-                                                        context
-                                                            .read<
-                                                                BoundaryBloc>()
-                                                            .add(
-                                                              BoundarySelectEvent(
-                                                                label: label,
-                                                                selectedBoundary:
-                                                                    selectedBoundary,
                                                               ),
                                                             );
                                                         if (labelIndex == 0) {
@@ -1105,7 +1058,9 @@ class _BoundarySelectionPageState
                                   ],
                                 ),
                               )
-                            ]),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   );
@@ -1143,7 +1098,7 @@ class _BoundarySelectionPageState
     return context.isWarehouseManager || context.isHealthFacilitySupervisor;
   }
 
-  dynamic filterBoundaryLabelListBasedOnRole(
+  List<String> filterBoundaryLabelListBasedOnRole(
       bool doFilter, BoundaryState state) {
     final labelList = state.selectedBoundaryMap.keys.toList();
     if (doFilter) {
@@ -1156,30 +1111,82 @@ class _BoundarySelectionPageState
     return labelList;
   }
 
+  Map<String, List<BoundaryModel>> _buildFilteredItemsByLabel({
+    required BoundaryState state,
+    required List<String> labelList,
+  }) {
+    final filteredItemsByLabel = <String, List<BoundaryModel>>{};
+    final materializedPathCache = <String, List<String>>{};
+
+    for (var index = 0; index < labelList.length; index++) {
+      final label = labelList[index];
+      if (index == 0) {
+        filteredItemsByLabel[label] = state.boundaryList
+            .where((element) => element.label == label)
+            .toList();
+        continue;
+      }
+
+      final parentLabel = labelList[index - 1];
+      final parentBoundary = state.selectedBoundaryMap[parentLabel];
+      if (parentBoundary?.code == null) {
+        filteredItemsByLabel[label] = <BoundaryModel>[];
+        continue;
+      }
+
+      final parentCode = parentBoundary!.code!;
+      filteredItemsByLabel[label] = state.boundaryList.where((element) {
+        if (element.label != label) return false;
+
+        final materializedPath = element.materializedPath;
+        if (materializedPath == null || materializedPath.isEmpty) return false;
+
+        final pathTokens = materializedPathCache.putIfAbsent(
+          materializedPath,
+          () => materializedPath.split('.'),
+        );
+        return pathTokens.contains(parentCode);
+      }).toList();
+    }
+
+    return filteredItemsByLabel;
+  }
+
+  Map<String, List<DropdownItem>> _buildDropdownItemsByLabel({
+    required Map<String, List<BoundaryModel>> filteredItemsByLabel,
+  }) {
+    return filteredItemsByLabel.map(
+      (label, boundaries) => MapEntry(
+        label,
+        boundaries
+            .map(
+              (boundary) => DropdownItem(
+                name: localizations.translate(boundary.code ?? 'No Value'),
+                code: boundary.code ?? '',
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+
+  Map<String, Map<String, BoundaryModel>> _buildBoundaryCodeIndexByLabel({
+    required Map<String, List<BoundaryModel>> filteredItemsByLabel,
+  }) {
+    return filteredItemsByLabel.map(
+      (label, boundaries) => MapEntry(
+        label,
+        {
+          for (final boundary in boundaries)
+            if (boundary.code != null) boundary.code!: boundary,
+        },
+      ),
+    );
+  }
+
   FormGroup buildForm(BoundaryState state, AppConfiguration appConfiguration) {
     formControls = {};
     final labelList = filterBoundaryLabelListBasedOnRole(doFilter, state);
-    if (state.boundaryList.isNotEmpty) {
-      final finalCodes = state.boundaryList.map((e) => e.code!).toList();
-
-      final labelCodeList = state.selectedBoundaryMap.keys
-          .map((key) => '${runtimeHierarchyType()}_$key')
-          .toList();
-
-      final combinedCodes = [
-        ...finalCodes,
-        ...labelCodeList,
-        i18.common.coreCommonSubmit,
-        i18.common.maxBoundarySelectionReached
-      ];
-
-      LocalizationParams().setCode(combinedCodes);
-      context.read<LocalizationBloc>().add(
-          LocalizationEvent.onUpdateLocalizationIndex(
-              index: appConfiguration.languages!.indexWhere((element) =>
-                  element.value == AppSharedPreferences().getSelectedLocale),
-              code: setLocale));
-    }
     for (int i = 0; i < labelList.length; i++) {
       final label = labelList[i];
       final isLastLevel = i == labelList.length - 1;
@@ -1223,5 +1230,37 @@ class _BoundarySelectionPageState
             });
           });
     });
+  }
+
+  void _refreshBoundaryLocalizationIfRequired({
+    required BoundaryState boundaryState,
+    required AppConfiguration appConfiguration,
+  }) {
+    if (boundaryState.boundaryList.isEmpty) return;
+    if (_lastBoundaryLocalizationKey.isNotEmpty) return;
+
+    final finalCodes = boundaryState.boundaryList.map((e) => e.code!).toList();
+    final labelCodeList = boundaryState.selectedBoundaryMap.keys
+        .map((key) => '${runtimeHierarchyType()}_$key')
+        .toList();
+
+    final combinedCodes = [
+      ...finalCodes,
+      ...labelCodeList,
+      i18.common.coreCommonSubmit,
+      i18.common.maxBoundarySelectionReached,
+    ];
+    final localizationKey = combinedCodes.join('|');
+    if (localizationKey == _lastBoundaryLocalizationKey) return;
+
+    _lastBoundaryLocalizationKey = localizationKey;
+    LocalizationParams().setCode(combinedCodes);
+    context.read<LocalizationBloc>().add(
+          LocalizationEvent.onUpdateLocalizationIndex(
+            index: appConfiguration.languages!.indexWhere((element) =>
+                element.value == AppSharedPreferences().getSelectedLocale),
+            code: setLocale,
+          ),
+        );
   }
 }

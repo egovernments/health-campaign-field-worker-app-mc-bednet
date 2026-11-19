@@ -52,46 +52,43 @@ class _PermissionsScreenState extends LocalizedState<PermissionsPage> {
 
   // Flag to track if permission handler is disabled
   bool _isDisabled = false;
+  bool _isCheckingPermissions = false;
 
   @override
   void initState() {
     super.initState();
+    _bootstrapPermissionHandler();
+  }
 
-    // Initialize config first, then permissions
-    _initializeConfig().then((_) {
-      // Skip permission initialization if disabled
-      if (_isDisabled) return;
+  Future<void> _bootstrapPermissionHandler() async {
+    await _initializeConfig();
+    if (_isDisabled || !mounted) return;
 
-      // Initialize permissions and check their current status
-      _initializePermissions().then((_) {
-        // Skip if disabled
-        if (_isDisabled) return;
+    await _initializePermissions();
+    if (_isDisabled || !mounted) return;
 
-        // Check permissions to update UI status, but don't auto-navigate
-        // User must explicitly click Continue after granting all permissions
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          // Skip if disabled
-          if (_isDisabled) return;
+    // Check permissions to update UI status, but don't auto-navigate.
+    // User must explicitly click Continue after granting all permissions.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (_isDisabled || !mounted) return;
 
-          bool granted = await _checkPermissions();
-          if (!granted) {
-            if (mounted) {
-              Toast.showToast(
-                context,
-                message: localizations.translate(
-                  i18.common.permissionsAlert,
-                ),
-                type: ToastType.error,
-              );
-            }
-            return;
-          }
+      final granted = await _checkPermissions();
+      if (!granted) {
+        if (mounted) {
+          Toast.showToast(
+            context,
+            message: localizations.translate(
+              i18.common.permissionsAlert,
+            ),
+            type: ToastType.error,
+          );
+        }
+        return;
+      }
 
-          if (mounted) {
-            context.router.replace(BoundarySelectionRoute());
-          }
-        });
-      });
+      if (mounted) {
+        context.router.replace(BoundarySelectionRoute());
+      }
     });
   }
 
@@ -257,18 +254,25 @@ class _PermissionsScreenState extends LocalizedState<PermissionsPage> {
     // change the following check accordingly. For safety, we'll treat empty as NOT all granted.
     if (requiredPermissions.isEmpty) {
       // Refresh statuses for potential UI rendering.
-      setState(() => statuses = currentStatuses);
+      if (mounted) {
+        setState(() => statuses = currentStatuses);
+      }
       return false;
     }
 
-    for (var entry in requiredPermissions.entries) {
-      final status = await entry.key.status;
-      currentStatuses[entry.key] = status;
+    final permissionEntries = requiredPermissions.entries.toList();
+    final statusResults = await Future.wait(
+      permissionEntries.map((entry) => entry.key.status),
+    );
+    for (var i = 0; i < permissionEntries.length; i++) {
+      currentStatuses[permissionEntries[i].key] = statusResults[i];
     }
 
-    setState(() {
-      statuses = currentStatuses;
-    });
+    if (mounted) {
+      setState(() {
+        statuses = currentStatuses;
+      });
+    }
 
     // If no permissions defined, don't auto-navigate
     if (requiredPermissions.isEmpty) {
@@ -535,23 +539,37 @@ class _PermissionsScreenState extends LocalizedState<PermissionsPage> {
           type: DigitButtonType.primary,
           size: DigitButtonSize.large,
           mainAxisSize: MainAxisSize.max,
+          isDisabled: _isCheckingPermissions,
           onPressed: () async {
-            bool granted = await _checkPermissions();
-            if (!granted || !backgroundActivityConfirmed) {
-              Toast.showToast(
-                context,
-                message: localizations.translate(
-                  !backgroundActivityConfirmed
-                      ? i18.common.enablePermissionCheckbox
-                      : i18.common.permissionsAlert,
-                ),
-                type: ToastType.error,
-              );
-              return;
-            }
+            if (_isCheckingPermissions) return;
 
-            if (mounted) {
-              context.router.replace(BoundarySelectionRoute());
+            setState(() {
+              _isCheckingPermissions = true;
+            });
+            try {
+              bool granted = await _checkPermissions();
+              if (!granted || !backgroundActivityConfirmed) {
+                Toast.showToast(
+                  context,
+                  message: localizations.translate(
+                    !backgroundActivityConfirmed
+                        ? i18.common.enablePermissionCheckbox
+                        : i18.common.permissionsAlert,
+                  ),
+                  type: ToastType.error,
+                );
+                return;
+              }
+
+              if (mounted) {
+                context.router.replace(BoundarySelectionRoute());
+              }
+            } finally {
+              if (mounted) {
+                setState(() {
+                  _isCheckingPermissions = false;
+                });
+              }
             }
           },
         )

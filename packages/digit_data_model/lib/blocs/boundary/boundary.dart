@@ -69,7 +69,6 @@ class BoundaryBloc extends Bloc<BoundaryEvent, BoundaryState> {
     BoundarySearchEvent event,
     BoundaryEmitter emit,
   ) async {
-    emit(state.copyWith(loading: true));
     List<BoundaryModel> boundaryList = await boundaryRepository.search(
       BoundarySearchModel(
         codes: event.code,
@@ -84,7 +83,6 @@ class BoundaryBloc extends Bloc<BoundaryEvent, BoundaryState> {
       state.copyWith(
         boundaryList: Set.of(r).toList(),
         selectedBoundaryMap: state.selectedBoundaryMap,
-        loading: false,
       ),
     );
   }
@@ -142,9 +140,8 @@ class BoundaryBloc extends Bloc<BoundaryEvent, BoundaryState> {
     BoundaryEmitter emit,
   ) async {
     // Merge current session's selections into accumulated list (deduplicate by code)
-    final existingCodes = state.selectedLastLevelBoundaries
-        .map((b) => b.code)
-        .toSet();
+    final existingCodes =
+        state.selectedLastLevelBoundaries.map((b) => b.code).toSet();
     final merged = [
       ...state.selectedLastLevelBoundaries,
       ...state.allSelectedLastLevelBoundaries

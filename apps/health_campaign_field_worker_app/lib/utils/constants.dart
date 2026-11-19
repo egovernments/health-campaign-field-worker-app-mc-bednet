@@ -55,7 +55,6 @@ import '../data/local_store/no_sql/schema/service_registry.dart';
 import '../data/repositories/remote/downsync.dart';
 import '../data/sync_registry.dart';
 import '../data/sync_service_mapper.dart';
-import '../firebase_options.dart';
 import 'environment_config.dart';
 import 'utils.dart';
 
@@ -268,9 +267,7 @@ class Constants {
     final config = appConfigs.firstOrNull;
 
     // Always initialize Firebase Core (required for FCM, analytics, etc.)
-    await firebase_services.initializeFirebaseCore(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    await firebase_services.initializeFirebaseCore();
 
     final enableCrashlytics =
         config?.firebaseConfig?.enableCrashlytics ?? false;
